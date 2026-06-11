@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Upload & Predict{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Upload Clinical Dictation</h1>
+    <p class="page-sub">Upload a medical billing audio file — Whisper transcribes it, Groq extracts the fields, and the model predicts the claim outcome.</p>
+</div>
+
+<!-- ── Status Row ─────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center gap-3">
+            <div style="font-size:1.8rem">🤖</div>
+            <div>
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; font-weight:600">Random Forest Model</div>
+                {% if model_loaded %}
+                    <span class="pill" style="background:#dcfce7;color:#15803d;margin-top:4px">✓ Loaded  |  threshold {{ threshold_pct }}%</span>
+                {% else %}
+                    <span class="pill" style="background:#fee2e2;color:#b91c1c;margin-top:4px">✗ Not found — run random_forest.py</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center gap-3">
+            <div style="font-size:1.8rem">📋</div>
+            <div>
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; font-weight:600">Historical Data</div>
+                {% if data_loaded %}
+                    <span class="pill" style="background:#dcfce7;color:#15803d;margin-top:4px">✓ Loaded — 400 records</span>
+                {% else %}
+                    <span class="pill" style="background:#fee2e2;color:#b91c1c;margin-top:4px">✗ Not found in data/</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center gap-3">
+            <div style="font-size:1.8rem">🔑</div>
+            <div>
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; font-weight:600">Groq API Keys</div>
+                {% if groq_keys > 0 %}
+                    <span class="pill" style="background:#dcfce7;color:#15803d;margin-top:4px">✓ {{ groq_keys }} key(s) ready</span>
+                {% else %}
+                    <span class="pill" style="background:#fee2e2;color:#b91c1c;margin-top:4px">✗ None found in .env</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Upload Card ─────────────────────────────────────────── -->
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 style="font-weight:700; color:#0f172a; margin-bottom:20px">🎤 Audio Upload</h5>
+
+            <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="mb-4">
+                    <label class="form-label" style="font-weight:600; font-size:0.875rem; color:#374151">
+                        Clinical Dictation Audio
+                    </label>
+                    <input type="file" name="audio" class="form-control" id="audioInput"
+                           accept=".mp3,.wav,.m4a,.flac,.ogg" required
+                           onchange="showFileName(this)">
+                    <div class="form-text" id="fileInfo">Supports MP3, WAV, M4A, FLAC</div>
+                </div>
+
+                <!-- Pipeline Steps -->
+                <div class="rounded p-3 mb-4" style="background:#f8fafc; border:1px solid #e2e8f0">
+                    <div style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px">
+                        What happens after upload
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px">
+                        {% for step in [
+                            ("1️⃣", "Whisper AI transcribes audio → text"),
+                            ("2️⃣", "Groq LLM extracts fields (diagnosis, ICD-10, CPT, amount…)"),
+                            ("3️⃣", "Random Forest predicts: Paid or Denied"),
+                            ("4️⃣", "Risk factors + recommended action displayed")
+                        ] %}
+                        <div style="display:flex; align-items:center; gap:10px; font-size:0.8rem; color:#64748b">
+                            <span>{{ step[0] }}</span>
+                            <span>{{ step[1] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn w-100 py-2"
+                        style="background:var(--accent); color:#fff; font-weight:600; border:none; border-radius:8px; font-size:0.9rem"
+                        id="submitBtn">
+                    🚀 Analyse Claim
+                </button>
+
+                <!-- Loading state -->
+                <div id="loadingMsg" style="display:none; text-align:center; margin-top:16px; color:#64748b; font-size:0.85rem">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Transcribing and extracting… this may take 15–30 seconds.
+                </div>
+            </form>
+        </div>
+
+        <!-- Model Info Box -->
+        <div class="card p-4 mt-3" style="background:#eff6ff; border:1px solid #bfdbfe">
+            <h6 style="font-weight:700; color:#1e40af; margin-bottom:8px">ℹ️ About the Model</h6>
+            <p style="font-size:0.8rem; color:#1e3a8a; margin:0; line-height:1.6">
+                Trained on 281 Paid/Denied records with <strong>SMOTE balancing</strong>.
+                Optimised for <strong>recall (88%)</strong> to minimise missed denials.
+                Uses a threshold of <strong>{{ threshold_pct }}%</strong> — anything above is flagged as a potential denial.
+                Pending claims are the test set and are predicted live.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showFileName(input) {
+    const info = document.getElementById("fileInfo");
+    if (input.files && input.files[0]) {
+        const f = input.files[0];
+        const mb = (f.size / 1024 / 1024).toFixed(2);
+        info.textContent = `📎 ${f.name} (${mb} MB)`;
+        info.style.color = "#16a34a";
+    }
+}
+
+document.getElementById("uploadForm").addEventListener("submit", function() {
+    document.getElementById("submitBtn").disabled = true;
+    document.getElementById("submitBtn").innerHTML = "⏳ Processing…";
+    document.getElementById("loadingMsg").style.display = "block";
+});
+</script>
+{% endblock %}
