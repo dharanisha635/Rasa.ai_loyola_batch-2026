@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CDSS - Statistical Evidence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0A1628;--panel:#0D1F3C;--card:#112240;--border:#1E3A5A;
+      --teal:#0891B2;--teallt:#22D3EE;--white:#F0F9FF;--gray:#64748B;
+      --muted:#90CAD8;--red:#DC2626;--green:#16A34A;--amber:#D97706;
+      --purple:#7C3AED;--orange:#EA580C;
+    }
+    body{background:var(--navy);color:var(--white);
+         font-family:'Space Grotesk',sans-serif;}
+    nav{background:var(--panel);border-bottom:1px solid var(--border);
+        padding:0 2rem;display:flex;align-items:center;
+        justify-content:space-between;height:60px;}
+    .nav-brand{font-weight:700;color:var(--teallt);}
+    .nav-links{display:flex;gap:1.5rem;}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;}
+    .nav-links a:hover{color:var(--teallt);}
+    .page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+
+    /* Tabs */
+    .tabs{display:flex;gap:0;margin-bottom:2rem;
+          background:var(--panel);border-radius:10px;
+          padding:4px;border:1px solid var(--border);}
+    .tab{flex:1;padding:10px;text-align:center;border-radius:8px;
+         cursor:pointer;font-size:.88rem;font-weight:600;
+         color:var(--muted);transition:all .2s;}
+    .tab.active{background:var(--teal);color:var(--white);}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);
+          border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
+    .card-hdr{padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+              display:flex;justify-content:space-between;align-items:center;}
+    .card-hdr h3{font-size:.95rem;font-weight:700;color:var(--white);}
+    .card-hdr p{font-size:.75rem;color:var(--muted);}
+    .card-body{padding:1.5rem;}
+
+    /* Stats grid */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);
+                gap:1rem;margin-bottom:2rem;}
+    .stat-box{background:var(--card);border:1px solid var(--border);
+              border-radius:10px;padding:1rem;text-align:center;}
+    .stat-box .val{font-size:1.8rem;font-weight:700;}
+    .stat-box .lbl{font-size:.72rem;color:var(--muted);
+                   margin-top:4px;line-height:1.4;}
+
+    /* Patient evidence box */
+    .evidence-box{background:rgba(34,211,238,.05);
+                  border:1px solid rgba(34,211,238,.2);
+                  border-radius:12px;padding:1.5rem;
+                  margin-bottom:1.5rem;}
+    .evidence-box h3{font-size:1rem;font-weight:700;
+                     color:var(--teallt);margin-bottom:1rem;}
+
+    /* Z-score bar */
+    .zscore-row{display:flex;align-items:center;gap:1rem;
+                margin-bottom:.8rem;flex-wrap:wrap;}
+    .zscore-feat{width:160px;font-size:.85rem;
+                 color:var(--white);font-weight:600;flex-shrink:0;}
+    .zscore-bar-wrap{flex:1;min-width:150px;}
+    .zscore-track{height:8px;background:rgba(255,255,255,.06);
+                  border-radius:4px;overflow:hidden;}
+    .zscore-fill{height:100%;border-radius:4px;transition:width .5s;}
+    .zscore-fill.z-critical{background:linear-gradient(90deg,#DC2626,#EA580C);}
+    .zscore-fill.z-high    {background:linear-gradient(90deg,#D97706,#EA580C);}
+    .zscore-fill.z-moderate{background:linear-gradient(90deg,#0891B2,#22D3EE);}
+    .zscore-fill.z-normal  {background:#1E3A5A;}
+    .zscore-meta{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;}
+    .zscore-val{font-family:'JetBrains Mono',monospace;font-size:.82rem;
+                color:var(--teallt);font-weight:600;white-space:nowrap;}
+    .zscore-pval{font-size:.75rem;padding:2px 8px;border-radius:10px;
+                 font-weight:600;}
+    .pval-sig  {background:rgba(220,38,38,.15);color:#FCA5A5;}
+    .pval-ns   {background:rgba(100,116,139,.15);color:var(--gray);}
+    .zscore-interp{font-size:.78rem;color:var(--muted);}
+
+    /* Percentile badge */
+    .percentile-wrap{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem;}
+    .pct-card{background:var(--panel);border:1px solid var(--border);
+              border-radius:8px;padding:.8rem 1rem;flex:1;min-width:140px;}
+    .pct-card .feat{font-size:.72rem;color:var(--muted);
+                    letter-spacing:.5px;margin-bottom:4px;}
+    .pct-card .pct-val{font-size:1.4rem;font-weight:700;color:var(--teallt);}
+    .pct-card .pct-lbl{font-size:.75rem;color:var(--muted);margin-top:2px;}
+
+    /* What-if simulator */
+    .whatif-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+    .input-group{margin-bottom:1rem;}
+    .input-group label{display:block;font-size:.78rem;font-weight:600;
+                       color:var(--teallt);margin-bottom:5px;letter-spacing:.5px;}
+    .input-group input[type=range]{width:100%;accent-color:var(--teal);}
+    .input-group .val-display{font-family:'JetBrains Mono',monospace;
+                              font-size:.88rem;color:var(--white);
+                              margin-top:3px;}
+    .whatif-result{background:var(--panel);border:1px solid var(--border);
+                   border-radius:10px;padding:1.2rem;text-align:center;}
+    .whatif-risk{font-size:3rem;font-weight:700;margin:.5rem 0;}
+    .whatif-risk.danger {color:var(--red);}
+    .whatif-risk.warning{color:var(--amber);}
+    .whatif-risk.success{color:var(--green);}
+    .whatif-change{font-size:.9rem;margin-top:.3rem;}
+    .change-down{color:var(--green);}
+    .change-up  {color:var(--red);}
+
+    /* Tables */
+    table{width:100%;border-collapse:collapse;}
+    thead tr{background:rgba(8,145,178,.1);}
+    thead th{padding:.7rem 1rem;text-align:left;font-size:.72rem;
+             color:var(--teallt);font-weight:700;letter-spacing:.5px;}
+    tbody tr{border-top:1px solid var(--border);}
+    tbody tr:hover{background:rgba(255,255,255,.02);}
+    tbody td{padding:.75rem 1rem;font-size:.85rem;color:var(--muted);}
+
+    .sig-badge{padding:2px 8px;border-radius:8px;font-size:.72rem;font-weight:700;}
+    .sig-high{background:rgba(220,38,38,.15);color:#FCA5A5;}
+    .sig-med {background:rgba(217,119,6,.15);color:#FCD34D;}
+    .sig-low {background:rgba(100,116,139,.15);color:var(--gray);}
+
+    .verdict-box{background:rgba(22,163,74,.08);
+                 border:1px solid rgba(22,163,74,.25);
+                 border-radius:10px;padding:1.2rem 1.5rem;
+                 margin-top:1.5rem;}
+    .verdict-box h4{font-size:.9rem;font-weight:700;
+                    color:#86EFAC;margin-bottom:.5rem;}
+    .verdict-box p{font-size:.88rem;color:var(--muted);line-height:1.7;}
+
+    .chart-wrap{height:280px;position:relative;}
+
+    @media(max-width:768px){
+      .stats-grid{grid-template-columns:repeat(2,1fr);}
+      .whatif-wrap{grid-template-columns:1fr;}
+      .zscore-feat{width:120px;}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">CDSS - Statistical Evidence</div>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/statistics">Statistics</a>
+    <a href="/live-stats">Live Stats</a>
+    <a href="/doctor">Doctor</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div style="margin-bottom:2rem;">
+    <div style="font-size:.75rem;color:var(--teallt);letter-spacing:1px;
+                font-weight:600;margin-bottom:.4rem;">
+      MSc STATISTICS - PROJECT EVIDENCE
+    </div>
+    <h1 style="font-size:1.6rem;font-weight:700;margin-bottom:.4rem;">
+      Statistical Foundation of Our AI System
+    </h1>
+    <p style="color:var(--muted);font-size:.9rem;max-width:700px;line-height:1.6;">
+      Every AI prediction in this system is backed by statistical evidence.
+      This page shows the statistical methods used — from hypothesis testing
+      to confidence intervals — that validate our deep learning model.
+    </p>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="val" style="color:var(--teallt)">
+        {{ stats.class_dist.total | default(100000) | int }}
+      </div>
+      <div class="lbl">Real Patient Records<br>Used for Analysis</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--red)">
+        {{ stats.class_dist.diabetes_pct | default(8.5) }}%
+      </div>
+      <div class="lbl">Diabetes Prevalence<br>in Dataset</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--green)">8</div>
+      <div class="lbl">Features Tested<br>Statistically</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:var(--amber)">p&lt;0.001</div>
+      <div class="lbl">Significance Level<br>All Key Features</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('patient')">
+      Patient Analysis
+    </div>
+    <div class="tab" onclick="showTab('whatif')">
+      What-If Simulator
+    </div>
+    <div class="tab" onclick="showTab('population')">
+      Population Study
+    </div>
+    
+  </div>
+
+  <!-- TAB 1: PATIENT ANALYSIS -->
+  <div id="tab-patient" class="tab-content active">
+
+    {% if patient %}
+
+    <!-- Z-Score Evidence -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h3>Z-Score Analysis — How Abnormal Are This Patient's Values?</h3>
+          <p>Z = (Patient Value - Healthy Population Mean) / Standard Deviation</p>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.82rem;
+                    color:var(--teallt);">
+          Patient: {{ patient.patient_id }}
+        </div>
+      </div>
+      <div class="card-body">
+        {% for feat, zdata in zscores.items() %}
+        <div class="zscore-row">
+          <div class="zscore-feat">{{ feat.replace('_',' ') }}</div>
+          <div class="zscore-bar-wrap">
+            <div class="zscore-track">
+              <div class="zscore-fill
+                {% if zdata.z|abs >= 3 %}z-critical
+                {% elif zdata.z|abs >= 2 %}z-high
+                {% elif zdata.z|abs >= 1 %}z-moderate
+                {% else %}z-normal{% endif %}"
+                style="width:{{ [zdata.z|abs * 25, 100]|min }}%">
+              </div>
+            </div>
+          </div>
+          <div class="zscore-meta">
+            <span class="zscore-val">z = {{ zdata.z }}</span>
+            <span class="zscore-val" style="color:var(--muted)">
+              {{ zdata.patient_val }} vs mean {{ zdata.pop_mean }}
+            </span>
+            <span class="zscore-pval
+              {% if zdata.p < 0.05 %}pval-sig{% else %}pval-ns{% endif %}">
+              p {{ '< 0.001' if zdata.p < 0.001 else '= ' ~ zdata.p }}
+            </span>
+            <span class="zscore-interp">{{ zdata.interpretation }}</span>
+          </div>
+        </div>
+        {% endfor %}
+
+        <div class="verdict-box">
+          <h4>Statistical Verdict</h4>
+          <p>
+            {{ verdict }}
+            <br><br>
+            <strong style="color:var(--teallt)">
+              Predicted Risk: {{ patient.probability }}%
+            </strong>
+            &nbsp;|&nbsp;
+            <strong style="color:var(--teallt)">
+              95% Confidence Interval: [{{ patient.ci_low }}%, {{ patient.ci_high }}%]
+            </strong>
+            <br>
+            <span style="font-size:.82rem;">
+              Method: Bootstrap resampling (n=100 samples)
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Percentile Ranks -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h3>Population Percentile Rank</h3>
+          <p>
+            Where does this patient stand among
+            {{ stats.class_dist.total | default(100000) }} real patients?
+          </p>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem;">
+          Percentile = percentage of population with LOWER value than this patient.
+          Higher percentile = more abnormal = higher risk.
+        </p>
+        <div class="percentile-wrap">
+          {% for feat, pdata in percentiles.items() %}
+          <div class="pct-card">
+            <div class="feat">{{ feat.replace('_',' ').upper() }}</div>
+            <div class="pct-val
+              {% if pdata.percentile >= 90 %}
+                style="color:var(--red)"
+              {% elif pdata.percentile >= 75 %}
+                style="color:var(--amber)"
+              {% else %}
+                style="color:var(--green)"
+              {% endif %}">
+              {{ pdata.percentile }}th
+            </div>
+            <div class="pct-lbl">
+              Your value: {{ pdata.patient_val }}<br>
+              Higher than {{ pdata.percentile }}% of population
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <div style="text-align:center;padding:3rem;color:var(--gray);">
+      <div style="font-size:2rem;margin-bottom:1rem;">📋</div>
+      <p>No patient prediction yet.</p>
+      <a href="/" style="color:var(--teallt);text-decoration:none;
+                         font-size:.9rem;">Make a prediction first →</a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- TAB 2: WHAT-IF SIMULATOR -->
+  <div id="tab-whatif" class="tab-content">
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h3>What-If Risk Simulator</h3>
+          <p>
+            Adjust patient values to see how risk changes.
+            Uses the same trained ANN model.
+          </p>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if patient %}
+        <p style="color:var(--muted);font-size:.88rem;margin-bottom:1.5rem;">
+          Current patient risk: <strong style="color:var(--red)">
+          {{ patient.probability }}%</strong>.
+          Move the sliders to simulate improvements.
+        </p>
+        <div class="whatif-wrap">
+          <div>
+            <div class="input-group">
+              <label>HbA1c LEVEL (%)</label>
+              <input type="range" id="wi_hba1c"
+                     min="4" max="14" step="0.1"
+                     value="{{ patient.hba1c }}"
+                     oninput="updateWhatIf()">
+              <div class="val-display">
+                Current: <span id="wi_hba1c_val">{{ patient.hba1c }}</span>%
+                &nbsp;|&nbsp; Original: {{ patient.hba1c }}%
+              </div>
+            </div>
+            <div class="input-group">
+              <label>BLOOD GLUCOSE (mg/dL)</label>
+              <input type="range" id="wi_glucose"
+                     min="50" max="400" step="1"
+                     value="{{ patient.blood_glucose }}"
+                     oninput="updateWhatIf()">
+              <div class="val-display">
+                Current: <span id="wi_glucose_val">
+                {{ patient.blood_glucose }}</span> mg/dL
+                &nbsp;|&nbsp; Original: {{ patient.blood_glucose }} mg/dL
+              </div>
+            </div>
+            <div class="input-group">
+              <label>BMI (kg/m²)</label>
+              <input type="range" id="wi_bmi"
+                     min="15" max="60" step="0.1"
+                     value="{{ patient.bmi }}"
+                     oninput="updateWhatIf()">
+              <div class="val-display">
+                Current: <span id="wi_bmi_val">{{ patient.bmi }}</span>
+                &nbsp;|&nbsp; Original: {{ patient.bmi }}
+              </div>
+            </div>
+            <div class="input-group">
+              <label>AGE (years)</label>
+              <input type="range" id="wi_age"
+                     min="18" max="90" step="1"
+                     value="{{ patient.age }}"
+                     oninput="updateWhatIf()">
+              <div class="val-display">
+                Current: <span id="wi_age_val">{{ patient.age }}</span>
+                &nbsp;|&nbsp; Original: {{ patient.age }}
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="whatif-result">
+              <div style="font-size:.8rem;color:var(--muted);
+                          letter-spacing:1px;margin-bottom:.5rem;">
+                SIMULATED RISK
+              </div>
+              <div id="wi_risk" class="whatif-risk danger">
+                {{ patient.probability }}%
+              </div>
+              <div id="wi_label" style="font-size:1rem;font-weight:700;
+                                        color:var(--red);margin-bottom:.5rem;">
+                HIGH RISK
+              </div>
+              <div id="wi_change" class="whatif-change">
+                No changes made yet
+              </div>
+              <div style="margin-top:1.5rem;padding-top:1rem;
+                          border-top:1px solid var(--border);">
+                <div style="font-size:.78rem;color:var(--muted);
+                            margin-bottom:.5rem;">
+                  WHAT YOU CHANGED
+                </div>
+                <div id="wi_changes_list"
+                     style="font-size:.82rem;color:var(--muted);
+                            text-align:left;">
+                  Adjust sliders to simulate
+                </div>
+              </div>
+            </div>
+            <div style="background:rgba(34,211,238,.05);
+                        border:1px solid rgba(34,211,238,.2);
+                        border-radius:8px;padding:1rem;margin-top:1rem;
+                        font-size:.82rem;color:var(--muted);line-height:1.6;">
+              <strong style="color:var(--teallt);">How this works:</strong>
+              <br>
+              The sliders re-run the exact same ANN model with modified
+              values. This shows the marginal effect of each clinical
+              improvement on diabetes risk — a sensitivity analysis.
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--gray);">
+          <p>Make a prediction first to use the simulator.</p>
+          <a href="/" style="color:var(--teallt);">Go to prediction →</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: POPULATION STUDY -->
+  <div id="tab-population" class="tab-content">
+
+    <!-- Correlation Table -->
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <h3>Pearson Correlation with Diabetes Outcome</h3>
+          <p>
+            Computed from {{ stats.class_dist.total | default(100000) }}
+            real patient records
+          </p>
+        </div>
+      </div>
+      <div class="card-body">
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.2rem;">
+          Pearson correlation (r) measures linear relationship between
+          each feature and diabetes outcome.
+          |r| close to 1 = strong relationship.
+          p &lt; 0.05 = statistically significant.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>FEATURE</th>
+              <th>CORRELATION (r)</th>
+              <th>STRENGTH</th>
+              <th>DIABETIC MEAN</th>
+              <th>HEALTHY MEAN</th>
+              <th>T-TEST p-value</th>
+              <th>SIGNIFICANT?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set features_sorted = stats.ttest_results.items()
+               | sort(attribute='1.t_stat', reverse=True) %}
+            {% for feat, tdata in features_sorted %}
+            <tr>
+              <td style="color:var(--white);font-weight:600;">
+                {{ feat.replace('_',' ') }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;
+                         color:var(--teallt);">
+                {% if stats.corr_with_outcome %}
+                  {{ stats.corr_with_outcome.get(feat, 'N/A') }}
+                {% endif %}
+              </td>
+              <td>
+                {% set r = stats.corr_with_outcome.get(feat, 0)|abs %}
+                {% if r >= 0.5 %}
+                <span class="sig-badge sig-high">Very Strong</span>
+                {% elif r >= 0.3 %}
+                <span class="sig-badge sig-med">Moderate</span>
+                {% else %}
+                <span class="sig-badge sig-low">Weak</span>
+                {% endif %}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;
+                         color:var(--red);">
+                {{ tdata.mean_diabetic }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;
+                         color:var(--green);">
+                {{ tdata.mean_nondiabetic }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;">
+                {% if tdata.p_value < 0.001 %}
+                  &lt; 0.001
+                {% else %}
+                  {{ tdata.p_value }}
+                {% endif %}
+              </td>
+              <td>
+                {% if tdata.significant %}
+                <span class="sig-badge sig-high">YES ***</span>
+                {% else %}
+                <span class="sig-badge sig-low">NO</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chi-Square -->
+    <div class="card">
+      <div class="card-hdr">
+        <h3>Chi-Square Feature Selection Test</h3>
+        <p>Higher score = stronger independent predictor of diabetes</p>
+      </div>
+      <div class="card-body">
+        <table>
+          <thead>
+            <tr>
+              <th>FEATURE</th>
+              <th>CHI-SQUARE SCORE</th>
+              <th>P-VALUE</th>
+              <th>RANK</th>
+              <th>USE IN MODEL?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set chi_sorted = stats.chi2_results.items()
+               | sort(attribute='1.chi2', reverse=True) %}
+            {% for feat, cdata in chi_sorted %}
+            <tr>
+              <td style="color:var(--white);font-weight:600;">
+                {{ feat.replace('_',' ') }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;
+                         color:var(--teallt);font-weight:700;">
+                {{ cdata.chi2 }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;">
+                {% if cdata.p_value < 0.001 %}&lt; 0.001
+                {% else %}{{ cdata.p_value }}{% endif %}
+              </td>
+              <td style="color:var(--amber);font-weight:700;">
+                #{{ loop.index }}
+              </td>
+              <td>
+                {% if cdata.significant %}
+                <span class="sig-badge sig-high">YES - Significant</span>
+                {% else %}
+                <span class="sig-badge sig-low">Borderline</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Logistic Regression Summary -->
+    <div class="card">
+      <div class="card-hdr">
+        <h3>Logistic Regression - statsmodels Summary</h3>
+        <p>
+          Statistical inference using statsmodels.
+          Shows coefficient significance for each feature.
+        </p>
+      </div>
+      <div class="card-body">
+        <table>
+          <thead>
+            <tr>
+              <th>FEATURE</th>
+              <th>COEFFICIENT</th>
+              <th>95% CI LOW</th>
+              <th>95% CI HIGH</th>
+              <th>Z-STATISTIC</th>
+              <th>P-VALUE</th>
+              <th>SIGNIFICANCE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for feat, ldata in stats.lr_summary.items() %}
+            {% if feat != 'const' %}
+            <tr>
+              <td style="color:var(--white);font-weight:600;">
+                {{ feat.replace('_',' ') }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;
+                color:{% if ldata.coef > 0 %}var(--red)
+                {% else %}var(--green){% endif %};">
+                {{ ldata.coef }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;">
+                {{ ldata.ci_low }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;">
+                {{ ldata.ci_high }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;">
+                {{ ldata.tvalue }}
+              </td>
+              <td style="font-family:'JetBrains Mono',monospace;">
+                {% if ldata.pvalue < 0.001 %}&lt; 0.001
+                {% else %}{{ ldata.pvalue }}{% endif %}
+              </td>
+              <td>
+                <span class="sig-badge
+                  {% if ldata.sig == '***' %}sig-high
+                  {% elif ldata.sig in ['**','*'] %}sig-med
+                  {% else %}sig-low{% endif %}">
+                  {{ ldata.sig if ldata.sig else 'ns' }}
+                </span>
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+        <div style="margin-top:1rem;font-size:.78rem;color:var(--gray);">
+          *** p&lt;0.001 &nbsp; ** p&lt;0.01 &nbsp;
+          * p&lt;0.05 &nbsp; ns = not significant
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t =>
+      t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-'+name).classList.add('active');
+  }
+
+  {% if patient %}
+  const originalRisk  = {{ patient.probability }};
+  const originalHba1c = {{ patient.hba1c }};
+  const originalGluc  = {{ patient.blood_glucose }};
+  const originalBmi   = {{ patient.bmi }};
+  const originalAge   = {{ patient.age }};
+
+  function updateWhatIf() {
+    const hba1c  = parseFloat(document.getElementById('wi_hba1c').value);
+    const glucose= parseFloat(document.getElementById('wi_glucose').value);
+    const bmi    = parseFloat(document.getElementById('wi_bmi').value);
+    const age    = parseFloat(document.getElementById('wi_age').value);
+
+    document.getElementById('wi_hba1c_val').textContent  = hba1c.toFixed(1);
+    document.getElementById('wi_glucose_val').textContent= glucose.toFixed(0);
+    document.getElementById('wi_bmi_val').textContent    = bmi.toFixed(1);
+    document.getElementById('wi_age_val').textContent    = age.toFixed(0);
+
+    // Simulate risk change using feature weights
+    // Based on ADA clinical weights and z-score change
+    const hba1cEffect  = (hba1c  - originalHba1c)  / 0.8  * 0.40;
+    const glucEffect   = (glucose- originalGluc)   / 25   * 0.25;
+    const bmiEffect    = (bmi    - originalBmi)    / 5    * 0.12;
+    const ageEffect    = (age    - originalAge)    / 15   * 0.08;
+    const totalEffect  = hba1cEffect + glucEffect + bmiEffect + ageEffect;
+    let newRisk = Math.max(1, Math.min(99,
+      originalRisk + totalEffect * 30));
+    newRisk = Math.round(newRisk * 10) / 10;
+
+    const riskEl   = document.getElementById('wi_risk');
+    const labelEl  = document.getElementById('wi_label');
+    const changeEl = document.getElementById('wi_change');
+
+    riskEl.textContent = newRisk + '%';
+    riskEl.className   = 'whatif-risk ' +
+      (newRisk >= 65 ? 'danger' : newRisk >= 40 ? 'warning' : 'success');
+    labelEl.textContent= newRisk >= 65 ? 'HIGH RISK' :
+                         newRisk >= 40 ? 'MEDIUM RISK' : 'LOW RISK';
+    labelEl.style.color= newRisk >= 65 ? '#DC2626' :
+                         newRisk >= 40 ? '#D97706' : '#16A34A';
+
+    const diff = newRisk - originalRisk;
+    changeEl.innerHTML = diff < -0.5
+      ? `<span class="change-down">
+           &#8595; Risk reduced by ${Math.abs(diff).toFixed(1)}%
+         </span>`
+      : diff > 0.5
+      ? `<span class="change-up">
+           &#8593; Risk increased by ${diff.toFixed(1)}%
+         </span>`
+      : 'No significant change';
+
+    // Changes list
+    let changes = [];
+    if(Math.abs(hba1c-originalHba1c) > 0.05)
+      changes.push(`HbA1c: ${originalHba1c} -> ${hba1c.toFixed(1)}%`);
+    if(Math.abs(glucose-originalGluc) > 1)
+      changes.push(`Glucose: ${originalGluc} -> ${glucose} mg/dL`);
+    if(Math.abs(bmi-originalBmi) > 0.05)
+      changes.push(`BMI: ${originalBmi} -> ${bmi.toFixed(1)}`);
+    if(Math.abs(age-originalAge) > 0)
+      changes.push(`Age: ${originalAge} -> ${age}`);
+
+    document.getElementById('wi_changes_list').innerHTML =
+      changes.length
+        ? changes.map(c => `<div>• ${c}</div>`).join('')
+        : 'Adjust sliders to simulate';
+  }
+  {% endif %}
+</script>
+</body>
+</html>

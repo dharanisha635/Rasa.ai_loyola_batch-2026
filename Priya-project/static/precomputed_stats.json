@@ -1,0 +1,292 @@
+{
+  "corr_with_outcome": {
+    "gender": 0.0376,
+    "age": 0.2649,
+    "hypertension": 0.1957,
+    "heart_disease": 0.1707,
+    "smoking_history": 0.0885,
+    "bmi": 0.2149,
+    "HbA1c_level": 0.4064,
+    "blood_glucose_level": 0.4243
+  },
+  "ttest_results": {
+    "gender": {
+      "mean_diabetic": 0.476,
+      "mean_nondiabetic": 0.41,
+      "t_stat": 11.671,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "age": {
+      "mean_diabetic": 60.926,
+      "mean_nondiabetic": 39.943,
+      "t_stat": 85.1901,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "hypertension": {
+      "mean_diabetic": 0.246,
+      "mean_nondiabetic": 0.061,
+      "t_stat": 61.8805,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "heart_disease": {
+      "mean_diabetic": 0.149,
+      "mean_nondiabetic": 0.03,
+      "t_stat": 53.7211,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "smoking_history": {
+      "mean_diabetic": 2.766,
+      "mean_nondiabetic": 2.179,
+      "t_stat": 27.5402,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "bmi": {
+      "mean_diabetic": 31.998,
+      "mean_nondiabetic": 26.869,
+      "t_stat": 68.2389,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "HbA1c_level": {
+      "mean_diabetic": 6.935,
+      "mean_nondiabetic": 5.397,
+      "t_stat": 137.919,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "blood_glucose_level": {
+      "mean_diabetic": 194.026,
+      "mean_nondiabetic": 132.818,
+      "t_stat": 145.3048,
+      "p_value": 0.0,
+      "significant": true
+    }
+  },
+  "chi2_results": {
+    "gender": {
+      "chi2": 39.78,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "age": {
+      "chi2": 1021.34,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "hypertension": {
+      "chi2": 3396.84,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "heart_disease": {
+      "chi2": 2687.58,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "smoking_history": {
+      "chi2": 238.41,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "bmi": {
+      "chi2": 137.15,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "HbA1c_level": {
+      "chi2": 1636.15,
+      "p_value": 0.0,
+      "significant": true
+    },
+    "blood_glucose_level": {
+      "chi2": 2262.14,
+      "p_value": 0.0,
+      "significant": true
+    }
+  },
+  "percentiles": {
+    "gender": {
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "mean": 0.42,
+      "std": 0.49,
+      "diabetic_mean": 0.476,
+      "nondiabetic_mean": 0.41
+    },
+    "age": {
+      "p10": 10.0,
+      "p25": 24.0,
+      "p50": 43.0,
+      "p75": 59.0,
+      "p90": 73.0,
+      "mean": 41.79,
+      "std": 22.46,
+      "diabetic_mean": 60.926,
+      "nondiabetic_mean": 39.943
+    },
+    "hypertension": {
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.0,
+      "p90": 0.0,
+      "mean": 0.08,
+      "std": 0.27,
+      "diabetic_mean": 0.246,
+      "nondiabetic_mean": 0.061
+    },
+    "heart_disease": {
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.0,
+      "p90": 0.0,
+      "mean": 0.04,
+      "std": 0.2,
+      "diabetic_mean": 0.149,
+      "nondiabetic_mean": 0.03
+    },
+    "smoking_history": {
+      "p10": 0.0,
+      "p25": 0.0,
+      "p50": 3.0,
+      "p75": 4.0,
+      "p90": 4.0,
+      "mean": 2.23,
+      "std": 1.88,
+      "diabetic_mean": 2.766,
+      "nondiabetic_mean": 2.179
+    },
+    "bmi": {
+      "p10": 19.0,
+      "p25": 23.4,
+      "p50": 27.32,
+      "p75": 29.86,
+      "p90": 35.7,
+      "mean": 27.32,
+      "std": 6.77,
+      "diabetic_mean": 31.998,
+      "nondiabetic_mean": 26.869
+    },
+    "HbA1c_level": {
+      "p10": 4.0,
+      "p25": 4.8,
+      "p50": 5.8,
+      "p75": 6.2,
+      "p90": 6.6,
+      "mean": 5.53,
+      "std": 1.07,
+      "diabetic_mean": 6.935,
+      "nondiabetic_mean": 5.397
+    },
+    "blood_glucose_level": {
+      "p10": 85.0,
+      "p25": 100.0,
+      "p50": 140.0,
+      "p75": 159.0,
+      "p90": 200.0,
+      "mean": 138.22,
+      "std": 40.91,
+      "diabetic_mean": 194.026,
+      "nondiabetic_mean": 132.818
+    }
+  },
+  "lr_summary": {
+    "const": {
+      "coef": -5.5905,
+      "pvalue": 0.0,
+      "tvalue": -25.4587,
+      "ci_low": -6.0209,
+      "ci_high": -5.1601,
+      "sig": "***"
+    },
+    "gender": {
+      "coef": 0.151,
+      "pvalue": 0.062052,
+      "tvalue": 1.8659,
+      "ci_low": -0.0076,
+      "ci_high": 0.3097,
+      "sig": ""
+    },
+    "age": {
+      "coef": 0.9854,
+      "pvalue": 0.0,
+      "tvalue": 8.7404,
+      "ci_low": 0.7644,
+      "ci_high": 1.2063,
+      "sig": "***"
+    },
+    "hypertension": {
+      "coef": 0.2449,
+      "pvalue": 1.7e-05,
+      "tvalue": 4.3069,
+      "ci_low": 0.1334,
+      "ci_high": 0.3563,
+      "sig": "***"
+    },
+    "heart_disease": {
+      "coef": 0.0973,
+      "pvalue": 0.080897,
+      "tvalue": 1.7455,
+      "ci_low": -0.012,
+      "ci_high": 0.2066,
+      "sig": ""
+    },
+    "smoking_history": {
+      "coef": 0.2942,
+      "pvalue": 0.001175,
+      "tvalue": 3.2449,
+      "ci_low": 0.1165,
+      "ci_high": 0.4719,
+      "sig": "**"
+    },
+    "bmi": {
+      "coef": 0.5747,
+      "pvalue": 0.0,
+      "tvalue": 7.8253,
+      "ci_low": 0.4307,
+      "ci_high": 0.7186,
+      "sig": "***"
+    },
+    "HbA1c_level": {
+      "coef": 2.8884,
+      "pvalue": 0.0,
+      "tvalue": 14.748,
+      "ci_low": 2.5046,
+      "ci_high": 3.2723,
+      "sig": "***"
+    },
+    "blood_glucose_level": {
+      "coef": 1.4546,
+      "pvalue": 0.0,
+      "tvalue": 15.4148,
+      "ci_low": 1.2697,
+      "ci_high": 1.6396,
+      "sig": "***"
+    }
+  },
+  "class_dist": {
+    "diabetic": 8482,
+    "nondiabetic": 87664,
+    "total": 96146,
+    "diabetes_pct": 8.82
+  },
+  "features": [
+    "gender",
+    "age",
+    "hypertension",
+    "heart_disease",
+    "smoking_history",
+    "bmi",
+    "HbA1c_level",
+    "blood_glucose_level"
+  ]
+}

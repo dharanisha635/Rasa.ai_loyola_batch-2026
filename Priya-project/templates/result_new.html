@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CDSS — Result</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0A1628;--panel:#0D1F3C;--card:#112240;--border:#1E3A5A;
+      --teal:#0891B2;--teallt:#22D3EE;--white:#F0F9FF;--gray:#64748B;
+      --muted:#90CAD8;--red:#DC2626;--green:#16A34A;--amber:#D97706;--purple:#7C3AED;
+    }
+    body{background:var(--navy);color:var(--white);font-family:'Space Grotesk',sans-serif;}
+    nav{background:var(--panel);border-bottom:1px solid var(--border);
+        padding:0 2rem;display:flex;align-items:center;
+        justify-content:space-between;height:60px;}
+    .nav-brand{font-weight:700;font-size:1rem;color:var(--teallt);}
+    .nav-links{display:flex;gap:1.5rem;}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;}
+    .page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+    .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+    .pid{background:rgba(8,145,178,.12);border:1px solid var(--teal);
+         color:var(--teallt);padding:6px 16px;border-radius:20px;
+         font-size:.82rem;font-family:'JetBrains Mono',monospace;font-weight:600;}
+    .back{color:var(--muted);text-decoration:none;font-size:.85rem;
+          border:1px solid var(--border);padding:6px 14px;border-radius:8px;}
+    .back:hover{color:var(--teallt);border-color:var(--teal);}
+
+    .verify-row{display:flex;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+    .v-badge{padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;}
+    .v-pass{background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#86EFAC;}
+    .v-warn{background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.3);color:#FCD34D;}
+    .v-fail{background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);color:#FCA5A5;}
+
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+    .stat-card{background:var(--card);border:1px solid var(--border);
+               border-radius:10px;padding:1rem;text-align:center;}
+    .stat-card .val{font-size:1.5rem;font-weight:700;}
+    .stat-card .lbl{font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+    .main-grid{display:grid;grid-template-columns:300px 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+
+    .risk-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .risk-hdr{padding:1rem 1.2rem 0.8rem;border-bottom:1px solid var(--border);}
+    .risk-lbl{font-size:.72rem;color:var(--muted);letter-spacing:1px;font-weight:600;margin-bottom:4px;}
+    .risk-big{font-size:4rem;font-weight:700;line-height:1;margin:.5rem 0 .3rem;}
+    .risk-big.danger{color:var(--red);}
+    .risk-big.warning{color:var(--amber);}
+    .risk-big.success{color:var(--green);}
+    .risk-txt{font-size:1rem;font-weight:700;letter-spacing:1px;margin-bottom:.5rem;}
+    .risk-txt.danger{color:var(--red);}
+    .risk-txt.warning{color:var(--amber);}
+    .risk-txt.success{color:var(--green);}
+    .ci-row{font-size:.78rem;color:var(--gray);font-family:'JetBrains Mono',monospace;
+            padding:.8rem 1.2rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,.15);}
+    .ci-row span{color:var(--teallt);font-weight:600;}
+
+    .shap{padding:1rem 1.2rem;}
+    .shap-title{font-size:.8rem;font-weight:700;color:var(--teallt);letter-spacing:.5px;margin-bottom:.8rem;}
+    .shap-row{margin-bottom:.65rem;}
+    .shap-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+    .shap-feat{font-size:.8rem;color:var(--white);font-weight:500;}
+    .shap-pct{font-size:.75rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+    .shap-track{height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
+    .shap-fill{height:100%;border-radius:4px;}
+    .shap-fill.r1{background:linear-gradient(90deg,#DC2626,#EA580C);}
+    .shap-fill.r2{background:linear-gradient(90deg,#D97706,#EA580C);}
+    .shap-fill.r3{background:linear-gradient(90deg,#0891B2,#22D3EE);}
+    .shap-fill.ro{background:#1E3A5A;}
+
+    .rx-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .rx-hdr{background:linear-gradient(135deg,var(--teal),#0369A1);padding:1rem 1.5rem;}
+    .rx-hdr h2{font-size:1rem;font-weight:700;color:white;}
+    .rx-hdr .sub{font-size:.78rem;color:rgba(255,255,255,.7);}
+    .rx-body{padding:1.5rem;}
+    .rx-sec{margin-bottom:1.4rem;}
+    .rx-sec-title{font-size:.75rem;font-weight:700;letter-spacing:1px;
+                  margin-bottom:.6rem;padding-bottom:6px;border-bottom:1px solid var(--border);}
+    .rx-sec-title.diag  {color:var(--red);   border-color:rgba(220,38,38,.3);}
+    .rx-sec-title.meds  {color:var(--amber); border-color:rgba(217,119,6,.3);}
+    .rx-sec-title.life  {color:var(--green); border-color:rgba(22,163,74,.3);}
+    .rx-sec-title.follow{color:var(--purple);border-color:rgba(124,58,237,.3);}
+    .rx-text{font-size:.88rem;color:var(--muted);line-height:1.7;}
+    .med-item{background:rgba(234,88,12,.08);border:1px solid rgba(234,88,12,.2);
+              border-radius:8px;padding:.8rem 1rem;margin-bottom:.6rem;}
+    .med-name{font-size:.9rem;font-weight:700;color:var(--amber);margin-bottom:3px;}
+    .med-det{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    .med-badge{display:inline-block;background:rgba(22,163,74,.15);
+               border:1px solid rgba(22,163,74,.3);color:#4ADE80;
+               font-size:.68rem;padding:2px 8px;border-radius:10px;margin-top:4px;}
+    .sl-item{font-size:.82rem;color:var(--gray);margin-bottom:.3rem;padding-left:1rem;}
+    .sl-item::before{content:"* ";color:var(--muted);}
+    .li-item,.fo-item{display:flex;gap:8px;align-items:flex-start;
+                      margin-bottom:.5rem;font-size:.85rem;color:var(--muted);}
+    .li-item::before{content:"›";color:var(--green);font-weight:700;flex-shrink:0;}
+    .fo-item::before{content:"›";color:var(--purple);font-weight:700;flex-shrink:0;}
+    .rx-source{background:rgba(234,88,12,.06);border-top:1px solid rgba(234,88,12,.2);
+               padding:.8rem 1.5rem;font-size:.75rem;color:var(--amber);
+               font-family:'JetBrains Mono',monospace;}
+
+    .doc-sec{background:var(--card);border:1px solid var(--border);
+             border-radius:14px;overflow:hidden;margin-top:1.5rem;}
+    .doc-hdr{background:rgba(185,28,28,.15);border-bottom:1px solid rgba(185,28,28,.3);
+             padding:1rem 1.5rem;}
+    .doc-hdr h3{font-size:1rem;font-weight:700;color:#FCA5A5;}
+    .doc-hdr p{font-size:.8rem;color:var(--muted);margin-top:3px;}
+    .doc-body{padding:1.5rem;}
+    .pending-tag{background:rgba(217,119,6,.15);border:1px solid var(--amber);
+                 color:var(--amber);font-size:.8rem;padding:6px 14px;
+                 border-radius:20px;font-weight:600;}
+    .btn-review{background:var(--teal);color:white;border:none;
+                padding:10px 24px;border-radius:8px;font-size:.9rem;
+                font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;
+                text-decoration:none;display:inline-block;transition:all .2s;}
+    .btn-review:hover{background:#0369A1;}
+    .action-row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+    .flag-item{background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.2);
+               border-radius:8px;padding:.7rem 1rem;margin-bottom:.5rem;
+               font-size:.82rem;color:#FCD34D;}
+
+    @media(max-width:768px){
+      .main-grid{grid-template-columns:1fr;}
+      .stats-row{grid-template-columns:repeat(2,1fr);}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">CDSS — Diabetes Prediction</div>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/statistics">Statistics</a>
+    <a href="/stats-evidence/{{ record_id }}">Stat Evidence</a>
+    <a href="/live-stats">Live Stats</a>
+    <a href="/doctor">Doctor Portal</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="top-bar">
+    <div class="pid">{{ patient_id }}</div>
+    <a href="/" class="back">← New Prediction</a>
+  </div>
+
+  <div class="verify-row">
+    {% if verification.passed %}
+    <span class="v-badge v-pass">✓ Layer 1: Risk-Medication Aligned</span>
+    <span class="v-badge v-pass">✓ Layer 2: HbA1c Clinically Consistent</span>
+    <span class="v-badge v-pass">✓ Layer 3: Evidence Grounded ({{ prescription.retrieved_chunks }} chunks)</span>
+    {% else %}
+    <span class="v-badge v-fail">⚠ Verification Issues — See flags below</span>
+    {% endif %}
+    {% if verification.flag_count > 0 %}
+    <span class="v-badge v-warn">{{ verification.flag_count }} Flag(s) — Auto-corrected</span>
+    {% endif %}
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val {{ risk_class }}">{{ probability }}%</div>
+      <div class="lbl">Diabetes Risk Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="font-size:1rem;padding-top:8px">{{ ci_low }}–{{ ci_high }}%</div>
+      <div class="lbl">95% Confidence Interval<br>(Bootstrap n=100)</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:#A78BFA;font-size:1rem;padding-top:8px;">{{ top_feature }}</div>
+      <div class="lbl">Primary Risk Factor<br>(Z-score × ADA weight)</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:var(--teallt);font-size:1rem;padding-top:8px;">{{ hba1c }}%</div>
+      <div class="lbl">HbA1c Level<br>(Key diabetes marker)</div>
+    </div>
+  </div>
+
+  {% if verification.flags %}
+  <div style="margin-bottom:1.5rem;">
+    <div style="font-size:.8rem;font-weight:700;color:var(--amber);letter-spacing:.5px;margin-bottom:.6rem;">
+      ⚠ VERIFICATION FLAGS (Auto-corrected)
+    </div>
+    {% for flag in verification.flags %}
+    <div class="flag-item">
+      Layer {{ flag.layer }} — {{ flag.type }}: {{ flag.msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="main-grid">
+    <div>
+      <div class="risk-card">
+        <div class="risk-hdr">
+          <div class="risk-lbl">DIABETES RISK SCORE</div>
+          <div class="risk-big {{ risk_class }}">{{ probability }}%</div>
+          <div class="risk-txt {{ risk_class }}">{{ risk_label }}</div>
+        </div>
+        <div class="ci-row">
+          95% CI: <span>{{ ci_low }}%</span> — <span>{{ ci_high }}%</span>
+          &nbsp;|&nbsp; Bootstrap n=100
+        </div>
+        <div class="shap">
+          <div class="shap-title">FEATURE IMPORTANCE</div>
+          {% for feat, pct in importance.items() %}
+          <div class="shap-row">
+            <div class="shap-top">
+              <span class="shap-feat">{{ feat }}</span>
+              <span class="shap-pct">{{ pct }}%</span>
+            </div>
+            <div class="shap-track">
+              <div class="shap-fill {% if loop.index==1 %}r1{% elif loop.index==2 %}r2{% elif loop.index==3 %}r3{% else %}ro{% endif %}"
+                   style="width:{{ pct }}%"></div>
+            </div>
+          </div>
+          {% endfor %}
+          <div style="font-size:.7rem;color:var(--gray);margin-top:.6rem;">
+            Z-score × ADA clinical weights
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="rx-card">
+        <div class="rx-hdr">
+          <h2>🤖 AI-Generated Prescription — Evidence-Based</h2>
+          <div class="sub">{{ prescription.source }}</div>
+        </div>
+        <div class="rx-body">
+          <div class="rx-sec">
+            <div class="rx-sec-title diag">DIAGNOSIS ASSESSMENT</div>
+            <p class="rx-text">{{ prescription.diagnosis }}</p>
+          </div>
+          <div class="rx-sec">
+            <div class="rx-sec-title meds">RECOMMENDED MEDICATIONS</div>
+            {% if prescription.medications %}
+              {% for med in prescription.medications %}
+              <div class="med-item">
+                <div class="med-name">{{ med.name }}</div>
+                <div class="med-det">
+                  Dose: {{ med.dose }}<br>
+                  {% if med.titrate %}Titrate: {{ med.titrate }}<br>{% endif %}
+                  {% if med.monitor %}Monitor: {{ med.monitor }}<br>{% endif %}
+                  {% if med.avoid_if %}Avoid if: {{ med.avoid_if }}{% endif %}
+                </div>
+                <span class="med-badge">{{ med.evidence }}</span>
+              </div>
+              {% endfor %}
+              {% if prescription.second_line %}
+              <div style="margin-top:.5rem;">
+                {% for sl in prescription.second_line %}
+                <div class="sl-item">{{ sl }}</div>
+                {% endfor %}
+              </div>
+              {% endif %}
+            {% else %}
+              <p class="rx-text">No pharmacological intervention required at this risk level.</p>
+            {% endif %}
+          </div>
+          <div class="rx-sec">
+            <div class="rx-sec-title life">LIFESTYLE INTERVENTION</div>
+            {% for item in prescription.lifestyle %}
+            <div class="li-item">{{ item }}</div>
+            {% endfor %}
+          </div>
+          <div class="rx-sec">
+            <div class="rx-sec-title follow">FOLLOW-UP PROTOCOL</div>
+            {% for item in prescription.followup %}
+            <div class="fo-item">{{ item }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="rx-source">
+          📚 {{ prescription.source }} &nbsp;|&nbsp; PMID: {{ prescription.pmid }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-sec">
+    <div class="doc-hdr">
+      <h3>🩺 Doctor Validation Required</h3>
+      <p>Prescription queued for review — Record #{{ record_id }}</p>
+    </div>
+    <div class="doc-body">
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem;">
+        This prescription is <strong style="color:#FCA5A5">NOT sent to patient</strong>
+        until a doctor approves it.
+      </p>
+      <div class="action-row">
+        <span class="pending-tag">⏳ PENDING REVIEW</span>
+        <a href="/doctor/review/{{ record_id }}" class="btn-review">Review as Doctor →</a>
+        <a href="/doctor" style="text-decoration:none;color:var(--muted);font-size:.85rem;">
+          View All Pending
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

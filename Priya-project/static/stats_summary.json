@@ -1,0 +1,44 @@
+{
+  "total_patients": 100000,
+  "diabetic": 8500,
+  "non_diabetic": 91500,
+  "diabetes_prevalence": 8.5,
+  "avg_age": 41.9,
+  "avg_bmi": 27.3,
+  "mean_hba1c_diabetic": 6.93,
+  "mean_hba1c_nondiabetic": 5.4,
+  "mean_glucose_diabetic": 194.1,
+  "mean_glucose_nondiabetic": 132.9,
+  "hypertension_rate": 7.5,
+  "heart_disease_rate": 3.9,
+  "smoker_rate": 22.6,
+  "obese_rate": 23.5,
+  "hba1c_corr": 0.401,
+  "glucose_corr": 0.42,
+  "ttest_results": {
+    "HbA1c_level": {
+      "t_stat": -138.2831,
+      "p_value": 0.0
+    },
+    "blood_glucose_level": {
+      "t_stat": -146.1611,
+      "p_value": 0.0
+    },
+    "bmi": {
+      "t_stat": -69.3982,
+      "p_value": 0.0
+    },
+    "age": {
+      "t_stat": -84.4477,
+      "p_value": 0.0
+    },
+    "hypertension": {
+      "t_stat": -63.8178,
+      "p_value": 0.0
+    },
+    "heart_disease": {
+      "t_stat": -55.1231,
+      "p_value": 0.0
+    }
+  }
+}

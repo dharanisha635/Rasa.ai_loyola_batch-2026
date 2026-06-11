@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CDSS — Review Prescription</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0A1628;--panel:#0D1F3C;--card:#112240;--border:#1E3A5A;
+      --teal:#0891B2;--teallt:#22D3EE;--white:#F0F9FF;--gray:#64748B;
+      --muted:#90CAD8;--red:#DC2626;--green:#16A34A;--amber:#D97706;--purple:#7C3AED;
+    }
+    body{background:var(--navy);color:var(--white);font-family:'Space Grotesk',sans-serif;}
+    nav{background:var(--panel);border-bottom:1px solid var(--border);
+        padding:0 2rem;display:flex;align-items:center;
+        justify-content:space-between;height:60px;}
+    .nav-brand{font-weight:700;font-size:1rem;color:var(--teallt);}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;margin-left:1.5rem;}
+    .page{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+    .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+    .pid{background:rgba(8,145,178,.12);border:1px solid var(--teal);
+         color:var(--teallt);padding:6px 16px;border-radius:20px;
+         font-size:.82rem;font-family:'JetBrains Mono',monospace;font-weight:600;}
+    .back{color:var(--muted);text-decoration:none;font-size:.85rem;
+          border:1px solid var(--border);padding:6px 14px;border-radius:8px;}
+
+    .card{background:var(--card);border:1px solid var(--border);
+          border-radius:14px;overflow:hidden;margin-bottom:1.5rem;}
+    .card-hdr{padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+              background:var(--panel);}
+    .card-hdr h3{font-size:.9rem;font-weight:700;color:var(--teallt);}
+    .card-body{padding:1.5rem;}
+
+    .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;}
+    .info-item .lbl{font-size:.7rem;color:var(--gray);font-weight:600;
+                    letter-spacing:.5px;margin-bottom:3px;}
+    .info-item .val{font-size:.9rem;color:var(--white);font-weight:500;}
+
+    .risk-big{font-size:2rem;font-weight:700;}
+    .risk-big.danger{color:var(--red);}
+    .risk-big.warning{color:var(--amber);}
+    .risk-big.success{color:var(--green);}
+
+    .rx-sec{margin-bottom:1.2rem;}
+    .rx-sec-title{font-size:.75rem;font-weight:700;letter-spacing:1px;
+                  color:var(--teallt);margin-bottom:.6rem;padding-bottom:5px;
+                  border-bottom:1px solid var(--border);}
+    .rx-text{font-size:.88rem;color:var(--muted);line-height:1.6;}
+    .med-item{background:rgba(234,88,12,.08);border:1px solid rgba(234,88,12,.2);
+              border-radius:8px;padding:.8rem 1rem;margin-bottom:.6rem;}
+    .med-name{font-weight:700;color:var(--amber);margin-bottom:3px;font-size:.9rem;}
+    .med-det{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    .med-badge{display:inline-block;background:rgba(22,163,74,.15);
+               border:1px solid rgba(22,163,74,.3);color:#4ADE80;
+               font-size:.68rem;padding:2px 8px;border-radius:10px;margin-top:4px;}
+    .li{font-size:.85rem;color:var(--muted);margin-bottom:.4rem;padding-left:.8rem;}
+    .li::before{content:"› ";color:var(--green);}
+
+    /* Doctor Decision Form */
+    .decision-card{background:rgba(185,28,28,.08);border:1px solid rgba(185,28,28,.3);
+                   border-radius:14px;overflow:hidden;margin-bottom:1.5rem;}
+    .decision-hdr{padding:1rem 1.5rem;border-bottom:1px solid rgba(185,28,28,.3);
+                  background:rgba(185,28,28,.12);}
+    .decision-hdr h3{font-size:.95rem;font-weight:700;color:#FCA5A5;}
+    .decision-body{padding:1.5rem;}
+    .field{margin-bottom:1rem;}
+    .field label{display:block;font-size:.78rem;font-weight:600;
+                 color:var(--teallt);margin-bottom:5px;letter-spacing:.4px;}
+    .field textarea,.field input{
+      width:100%;background:var(--panel);border:1px solid var(--border);
+      border-radius:8px;padding:10px 14px;color:var(--white);
+      font-family:'Space Grotesk',sans-serif;font-size:.88rem;
+      resize:vertical;outline:none;transition:border-color .2s;}
+    .field textarea:focus,.field input:focus{
+      border-color:var(--teal);box-shadow:0 0 0 3px rgba(8,145,178,.15);}
+    .btns{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.2rem;}
+    .btn{padding:10px 22px;border-radius:8px;font-size:.88rem;
+         font-weight:700;cursor:pointer;border:none;
+         font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+    .btn-approve{background:var(--green);color:white;}
+    .btn-approve:hover{background:#15803D;}
+    .btn-reject {background:var(--red);color:white;}
+    .btn-reject:hover{background:#B91C1C;}
+    .btn-modify {background:var(--purple);color:white;}
+    .btn-modify:hover{background:#6D28D9;}
+
+    /* Already reviewed */
+    .status-banner{padding:.8rem 1.2rem;border-radius:8px;
+                   font-size:.85rem;font-weight:600;margin-bottom:1rem;}
+    .s-approved{background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#4ADE80;}
+    .s-rejected{background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);color:#FCA5A5;}
+    .s-modified{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);color:#A78BFA;}
+    .download-btn{background:var(--teal);color:white;padding:10px 22px;
+                  border-radius:8px;text-decoration:none;font-weight:700;
+                  font-size:.88rem;display:inline-block;margin-top:.8rem;}
+
+    @media(max-width:600px){.info-grid{grid-template-columns:repeat(2,1fr);}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">CDSS — Doctor Review</div>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/doctor">← Back to Portal</a>
+  </div>
+</nav>
+<div class="page">
+  <div class="top-bar">
+    <div class="pid">{{ record.patient_id }}</div>
+    <a href="/doctor" class="back">← All Records</a>
+  </div>
+
+  <!-- Patient Info -->
+  <div class="card">
+    <div class="card-hdr"><h3>PATIENT INFORMATION</h3></div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><div class="lbl">AGE</div><div class="val">{{ record.age }} yrs</div></div>
+        <div class="info-item"><div class="lbl">GENDER</div><div class="val">{{ record.gender or 'N/A' }}</div></div>
+        <div class="info-item"><div class="lbl">BMI</div><div class="val">{{ record.bmi }} kg/m²</div></div>
+        <div class="info-item"><div class="lbl">HbA1c</div><div class="val">{{ record.hba1c }}%</div></div>
+        <div class="info-item"><div class="lbl">BLOOD GLUCOSE</div><div class="val">{{ record.blood_glucose }} mg/dL</div></div>
+        <div class="info-item"><div class="lbl">HYPERTENSION</div><div class="val">{{ 'Yes' if record.hypertension else 'No' }}</div></div>
+        <div class="info-item"><div class="lbl">HEART DISEASE</div><div class="val">{{ 'Yes' if record.heart_disease else 'No' }}</div></div>
+        <div class="info-item"><div class="lbl">SMOKING</div><div class="val">{{ record.smoking or 'N/A' }}</div></div>
+        <div class="info-item">
+          <div class="lbl">RISK SCORE</div>
+          <div class="risk-big {% if 'HIGH' in record.risk_label %}danger{% elif 'MEDIUM' in record.risk_label %}warning{% else %}success{% endif %}">
+            {{ record.risk_score }}%
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1rem;font-size:.82rem;color:var(--muted);">
+        95% CI: {{ record.ci_low }}% — {{ record.ci_high }}% &nbsp;|&nbsp;
+        Primary factor: <strong style="color:var(--teallt);">{{ record.top_feature }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Prescription -->
+  <div class="card">
+    <div class="card-hdr"><h3>AI-GENERATED PRESCRIPTION</h3></div>
+    <div class="card-body">
+      <div class="rx-sec">
+        <div class="rx-sec-title">DIAGNOSIS</div>
+        <p class="rx-text">{{ record.prescription.diagnosis }}</p>
+      </div>
+      <div class="rx-sec">
+        <div class="rx-sec-title">MEDICATIONS</div>
+        {% if record.prescription.medications %}
+          {% for med in record.prescription.medications %}
+          <div class="med-item">
+            <div class="med-name">{{ med.name }}</div>
+            <div class="med-det">
+              Dose: {{ med.dose }}<br>
+              {% if med.titrate %}Titrate: {{ med.titrate }}<br>{% endif %}
+              {% if med.monitor %}Monitor: {{ med.monitor }}<br>{% endif %}
+              {% if med.avoid_if %}Avoid if: {{ med.avoid_if }}{% endif %}
+            </div>
+            <span class="med-badge">{{ med.evidence }}</span>
+          </div>
+          {% endfor %}
+          {% for sl in record.prescription.second_line %}
+          <div style="font-size:.82rem;color:var(--gray);margin-bottom:.3rem;">* {{ sl }}</div>
+          {% endfor %}
+        {% else %}
+          <p class="rx-text">No pharmacological intervention recommended.</p>
+        {% endif %}
+      </div>
+      <div class="rx-sec">
+        <div class="rx-sec-title">LIFESTYLE</div>
+        {% for item in record.prescription.lifestyle %}
+        <div class="li">{{ item }}</div>
+        {% endfor %}
+      </div>
+      <div class="rx-sec">
+        <div class="rx-sec-title">FOLLOW-UP</div>
+        {% for item in record.prescription.followup %}
+        <div class="li">{{ item }}</div>
+        {% endfor %}
+      </div>
+      <div style="font-size:.75rem;color:var(--amber);margin-top:.5rem;
+                  font-family:'JetBrains Mono',monospace;">
+        📚 {{ record.prescription.source }} | PMID: {{ record.prescription.pmid }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision -->
+  {% if record.status == 'PENDING' %}
+  <div class="decision-card">
+    <div class="decision-hdr"><h3>🩺 Your Decision</h3></div>
+    <div class="decision-body">
+      <form action="/doctor/decide/{{ record.id }}" method="POST">
+        <div class="field">
+          <label>DOCTOR NOTES (optional)</label>
+          <textarea name="notes" rows="2" placeholder="Add clinical notes or observations..."></textarea>
+        </div>
+        <div class="field">
+          <label>REJECTION REASON (fill if rejecting)</label>
+          <textarea name="reject_reason" rows="2"
+                    placeholder="Why are you rejecting this prescription?"></textarea>
+        </div>
+        <div class="field">
+          <label>CORRECT MEDICATIONS (fill if rejecting — helps AI learn)</label>
+          <textarea name="correct_medicines" rows="2"
+                    placeholder="What medications should have been recommended?"></textarea>
+        </div>
+        <div class="field">
+          <label>MODIFIED PRESCRIPTION (fill if modifying)</label>
+          <textarea name="modified_rx" rows="3"
+                    placeholder="Enter your modified prescription text here..."></textarea>
+        </div>
+        <div class="btns">
+          <button type="submit" name="action" value="APPROVED" class="btn btn-approve">
+            ✓ Approve
+          </button>
+          <button type="submit" name="action" value="MODIFIED" class="btn btn-modify">
+            ✎ Approve with Modifications
+          </button>
+          <button type="submit" name="action" value="REJECTED" class="btn btn-reject">
+            ✗ Reject
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Already reviewed -->
+  <div class="card">
+    <div class="card-hdr"><h3>REVIEW OUTCOME</h3></div>
+    <div class="card-body">
+      <div class="status-banner
+        {% if record.status == 'APPROVED' %}s-approved
+        {% elif record.status == 'REJECTED' %}s-rejected
+        {% else %}s-modified{% endif %}">
+        Status: {{ record.status }}
+      </div>
+      {% if record.doctor_notes %}
+      <p style="font-size:.88rem;color:var(--muted);margin-bottom:.5rem;">
+        <strong style="color:var(--white);">Notes:</strong> {{ record.doctor_notes }}
+      </p>
+      {% endif %}
+      {% if record.modified_rx %}
+      <p style="font-size:.88rem;color:var(--muted);">
+        <strong style="color:var(--white);">Modified Rx:</strong> {{ record.modified_rx }}
+      </p>
+      {% endif %}
+      {% if record.status == 'APPROVED' or record.status == 'MODIFIED' %}
+      <a href="/download/{{ record.id }}" class="download-btn">⬇ Download PDF</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>
