@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+{% block title %}Statistical Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Statistical Analysis</h1>
+    <p class="page-sub">ANOVA · Chi-Square · Model Comparison · Coding Accuracy · KPI Summary</p>
+</div>
+
+{% if not stats %}
+<div class="card p-5 text-center">
+    <div style="font-size:3rem">📊</div>
+    <h5 style="color:#64748b;margin-top:12px">No data available. Place your Excel file in the data/ folder and restart the app.</h5>
+</div>
+{% else %}
+
+<!-- ══════════════════════════════════════════════════════════
+     KPI SUMMARY CARDS
+══════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card p-3">
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700">Total Records</div>
+            <div style="font-size:2rem;font-weight:800;color:#0f172a">{{ stats.kpi1.total }}</div>
+            <div style="font-size:0.72rem;color:#94a3b8">all encounters</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card p-3">
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700">Approval Rate</div>
+            <div style="font-size:2rem;font-weight:800;color:#16a34a">{{ stats.kpi1.approval_rate }}%</div>
+            <div style="font-size:0.72rem;color:#94a3b8">95% CI: {{ stats.kpi1.ci_low }}% – {{ stats.kpi1.ci_high }}%</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card p-3">
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700">Denial Rate</div>
+            <div style="font-size:2rem;font-weight:800;color:#dc2626">{{ stats.kpi1.denial_rate }}%</div>
+            <div style="font-size:0.72rem;color:#94a3b8">{{ stats.kpi1.denied }} denied claims</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card p-3">
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700">Pending Claims</div>
+            <div style="font-size:2rem;font-weight:800;color:#ca8a04">{{ stats.kpi1.pending }}</div>
+            <div style="font-size:0.72rem;color:#94a3b8">{{ stats.kpi1.pending_rate }}% of total</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STATISTICAL TESTS  (ANOVA + Chi-Square side by side)
+══════════════════════════════════════════════════════════ -->
+<div class="row g-4 mb-4">
+
+    <!-- ANOVA -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">📐 One-Way ANOVA</h5>
+            <p style="font-size:0.78rem;color:#64748b;margin-bottom:16px">
+                Tests whether billed amount differs significantly across departments.
+            </p>
+
+            <div class="row g-2 mb-3">
+                <div class="col-4">
+                    <div class="field-block">
+                        <div class="field-label">F-Statistic</div>
+                        <div class="field-value" style="font-size:1.1rem;color:#1e40af">{{ stats.anova.f_stat }}</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="field-block">
+                        <div class="field-label">p-Value</div>
+                        <div class="field-value" style="font-size:1.1rem;color:{% if stats.anova.significant %}#dc2626{% else %}#16a34a{% endif %}">
+                            {{ stats.anova.p_value }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="field-block" style="background:{% if stats.anova.significant %}#dcfce7{% else %}#f1f5f9{% endif %}">
+                        <div class="field-label">Result</div>
+                        <div class="field-value" style="font-size:0.78rem;color:{% if stats.anova.significant %}#15803d{% else %}#475569{% endif %}">
+                            {% if stats.anova.significant %}✅ Significant{% else %}Not Significant{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#eff6ff;padding:10px 12px;border-radius:8px;font-size:0.78rem;color:#1e3a8a;margin-bottom:14px">
+                {% if stats.anova.significant %}
+                    <strong>Interpretation:</strong> Billed amounts differ significantly across departments (p &lt; 0.05). Department is a meaningful predictor of billing amount.
+                {% else %}
+                    <strong>Interpretation:</strong> No significant difference in billed amounts across departments.
+                {% endif %}
+            </div>
+
+            <!-- Department Revenue Table -->
+            <table class="table table-sm mb-0" style="font-size:0.78rem">
+                <thead style="background:#f8fafc;color:#64748b;font-size:0.65rem;text-transform:uppercase">
+                    <tr>
+                        <th style="padding:8px;border:none">Department</th>
+                        <th style="padding:8px;border:none">Mean ($)</th>
+                        <th style="padding:8px;border:none">Median ($)</th>
+                        <th style="padding:8px;border:none">Std Dev</th>
+                        <th style="padding:8px;border:none">Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept, vals in stats.anova.dept_revenue.items() %}
+                    <tr style="border-top:1px solid #f1f5f9">
+                        <td style="padding:8px;font-weight:500">{{ dept }}</td>
+                        <td style="padding:8px">${{ vals.mean }}</td>
+                        <td style="padding:8px">${{ vals.median }}</td>
+                        <td style="padding:8px">${{ vals.std }}</td>
+                        <td style="padding:8px">{{ vals.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Chi-Square -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">🔬 Chi-Square Test</h5>
+            <p style="font-size:0.78rem;color:#64748b;margin-bottom:16px">
+                Tests whether claim status (Paid/Denied/Pending) is associated with department.
+            </p>
+
+            <div class="row g-2 mb-3">
+                <div class="col-4">
+                    <div class="field-block">
+                        <div class="field-label">Chi² Statistic</div>
+                        <div class="field-value" style="font-size:1.1rem;color:#1e40af">{{ stats.chi_square.chi2 }}</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="field-block">
+                        <div class="field-label">p-Value</div>
+                        <div class="field-value" style="font-size:1.1rem;color:{% if stats.chi_square.significant %}#dc2626{% else %}#16a34a{% endif %}">
+                            {{ stats.chi_square.p_value }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="field-block" style="background:{% if stats.chi_square.significant %}#dcfce7{% else %}#f1f5f9{% endif %}">
+                        <div class="field-label">Result</div>
+                        <div class="field-value" style="font-size:0.78rem;color:{% if stats.chi_square.significant %}#15803d{% else %}#475569{% endif %}">
+                            {% if stats.chi_square.significant %}✅ Significant{% else %}Not Significant{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#eff6ff;padding:10px 12px;border-radius:8px;font-size:0.78rem;color:#1e3a8a;margin-bottom:14px">
+                {% if stats.chi_square.significant %}
+                    <strong>Interpretation:</strong> Department and claim status are significantly associated (p &lt; 0.05). The department a patient visits influences claim outcomes.
+                {% else %}
+                    <strong>Interpretation:</strong> No significant association between department and claim status.
+                {% endif %}
+                &nbsp;Degrees of freedom: {{ stats.chi_square.dof }}.
+            </div>
+
+            <!-- Contingency Table -->
+            <div style="overflow-x:auto">
+                <table class="table table-sm mb-0" style="font-size:0.75rem">
+                    <thead style="background:#f8fafc;color:#64748b;font-size:0.65rem;text-transform:uppercase">
+                        <tr>
+                            <th style="padding:8px;border:none">Department</th>
+                            {% for status in ["Paid","Denied","Pending"] %}
+                            <th style="padding:8px;border:none">{{ status }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dept, row in stats.chi_square.contingency.items() %}
+                        <tr style="border-top:1px solid #f1f5f9">
+                            <td style="padding:8px;font-weight:500">{{ dept }}</td>
+                            {% for status in ["Paid","Denied","Pending"] %}
+                            <td style="padding:8px">{{ row.get(status, 0) }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     KPI 5 — BILLING AMOUNT SUMMARY + Chart
+══════════════════════════════════════════════════════════ -->
+<div class="row g-4 mb-4">
+    <div class="col-md-5">
+        <div class="card p-4">
+            <h5 style="font-weight:700;color:#0f172a;margin-bottom:14px">💵 KPI 5 — Billing Amount Summary</h5>
+            <div class="row g-2">
+                {% for label, val in [("Mean", stats.kpi5.mean), ("Median", stats.kpi5.median),
+                                       ("Mode", stats.kpi5.mode), ("Std Dev", stats.kpi5.std),
+                                       ("Min", stats.kpi5.min), ("Max", stats.kpi5.max)] %}
+                <div class="col-6">
+                    <div class="field-block">
+                        <div class="field-label">{{ label }}</div>
+                        <div class="field-value">${{ val }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 7 — Top Diagnoses Pareto -->
+    <div class="col-md-7">
+        <div class="card p-4" style="height:100%">
+            <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">🩺 KPI 7 — Top Diagnoses (Pareto)</h5>
+            <p style="font-size:0.78rem;color:#64748b;margin-bottom:12px">
+                Top {{ stats.kpi7.pareto_cutoff }} diagnoses cover 80% of all cases (80/20 rule)
+            </p>
+            <div style="position:relative;height:200px">
+                <canvas id="paretoChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODEL COMPARISON (KPI 9)
+══════════════════════════════════════════════════════════ -->
+<div class="row g-4 mb-4">
+    <div class="col-md-7">
+        <div class="card p-4">
+            <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">🤖 KPI 9 — Model Comparison</h5>
+            <p style="font-size:0.78rem;color:#64748b;margin-bottom:14px">
+                Logistic Regression vs Decision Tree vs Random Forest — trained on Paid/Denied claims with class_weight=balanced
+            </p>
+            <div style="position:relative;height:220px;margin-bottom:16px">
+                <canvas id="modelChart"></canvas>
+            </div>
+
+            <!-- Model Table -->
+            <table class="table table-sm mb-0" style="font-size:0.8rem">
+                <thead style="background:#f8fafc;color:#64748b;font-size:0.65rem;text-transform:uppercase">
+                    <tr>
+                        <th style="padding:10px;border:none">Model</th>
+                        <th style="padding:10px;border:none">Accuracy</th>
+                        <th style="padding:10px;border:none">Precision</th>
+                        <th style="padding:10px;border:none">Recall</th>
+                        <th style="padding:10px;border:none">F1 Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, m in stats.model_comparison.items() %}
+                    <tr style="border-top:1px solid #f1f5f9; {% if name == 'Random Forest' %}background:#f0fdf4;{% endif %}">
+                        <td style="padding:10px;font-weight:{% if name == 'Random Forest' %}700{% else %}400{% endif %}">
+                            {{ name }}{% if name == 'Random Forest' %} ⭐{% endif %}
+                        </td>
+                        <td style="padding:10px">{{ m.accuracy }}%</td>
+                        <td style="padding:10px">{{ m.precision }}%</td>
+                        <td style="padding:10px;color:#1e40af;font-weight:600">{{ m.recall }}%</td>
+                        <td style="padding:10px">{{ m.f1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="font-size:0.72rem;color:#94a3b8;margin-top:8px">
+                ⭐ Random Forest selected as final model — highest recall is prioritised to minimise missed denials.
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Importance -->
+    <div class="col-md-5">
+        <div class="card p-4">
+            <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">📊 Feature Importance</h5>
+            <p style="font-size:0.78rem;color:#64748b;margin-bottom:12px">Random Forest — which features drive denial prediction</p>
+            <div style="position:relative;height:260px">
+                <canvas id="importanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CODING ACCURACY
+══════════════════════════════════════════════════════════ -->
+{% if stats.coding_stats %}
+<div class="card p-4 mb-4">
+    <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">🔢 Medical Coding Accuracy (Groq AI)</h5>
+    <p style="font-size:0.78rem;color:#64748b;margin-bottom:16px">
+        Groq AI reviewed {{ stats.coding_stats.total }} CPT codes against their diagnoses and ICD-10 codes.
+    </p>
+
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-4">
+        {% for label, val, color in [
+            ("Accuracy",  stats.coding_stats.accuracy,  "#1b6ca8"),
+            ("Precision", stats.coding_stats.precision, "#16a34a"),
+            ("Recall",    stats.coding_stats.recall,    "#ca8a04"),
+            ("F1 Score",  stats.coding_stats.f1,        "#7c3aed")
+        ] %}
+        <div class="col-6 col-md-3">
+            <div class="card p-3" style="border-top:3px solid {{ color }}">
+                <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700">{{ label }}</div>
+                <div style="font-size:1.8rem;font-weight:800;color:{{ color }}">{{ val }}%</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row g-3">
+        <!-- CPT Match Stats -->
+        <div class="col-md-5">
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="field-block" style="background:#dcfce7">
+                        <div class="field-label" style="color:#15803d">CPT Match Rate</div>
+                        <div class="field-value" style="color:#15803d;font-size:1.2rem">{{ stats.coding_stats.match_rate }}%</div>
+                        <div style="font-size:0.7rem;color:#16a34a">{{ stats.coding_stats.match_count }} matched</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field-block" style="background:#fee2e2">
+                        <div class="field-label" style="color:#b91c1c">Mismatch Rate</div>
+                        <div class="field-value" style="color:#b91c1c;font-size:1.2rem">{{ (100 - stats.coding_stats.match_rate) | round(1) }}%</div>
+                        <div style="font-size:0.7rem;color:#dc2626">{{ stats.coding_stats.mismatch_count }} mismatched</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field-block">
+                        <div class="field-label">Avg Confidence</div>
+                        <div class="field-value">{{ stats.coding_stats.avg_confidence }}%</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field-block">
+                        <div class="field-label">High Confidence (≥80%)</div>
+                        <div class="field-value">{{ stats.coding_stats.high_confidence }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confidence Distribution -->
+        <div class="col-md-7">
+            <div style="font-size:0.75rem;font-weight:600;color:#475569;margin-bottom:8px">Confidence Distribution</div>
+            <div style="position:relative;height:160px">
+                <canvas id="confChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card p-4 mb-4" style="background:#fef9c3;border:1px solid #fde68a">
+    <h5 style="font-weight:700;color:#92400e;margin-bottom:8px">🔢 Medical Coding Accuracy</h5>
+    <p style="font-size:0.85rem;color:#78350f;margin:0">
+        Run <code>python coding_accuracy.py</code> to generate results, then place 
+        <code>coding_accuracy_results.csv</code> in the <code>results/</code> folder.
+        The stats will appear here automatically.
+    </p>
+</div>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════════════
+     APPROVAL RATE BY DEPARTMENT
+══════════════════════════════════════════════════════════ -->
+<div class="card p-4">
+    <h5 style="font-weight:700;color:#0f172a;margin-bottom:4px">✅ Approval Rate by Department</h5>
+    <p style="font-size:0.78rem;color:#64748b;margin-bottom:12px">Percentage of claims paid per department</p>
+    <div style="position:relative;height:240px">
+        <canvas id="approvalChart"></canvas>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if stats %}
+<script>
+const stats = {{ stats | tojson }};
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = "#64748b";
+
+// ── Pareto Chart ──────────────────────────────────────────
+const diagLabels = Object.keys(stats.kpi7.top_diagnoses);
+const diagCounts = Object.values(stats.kpi7.top_diagnoses);
+const diagCumul  = Object.values(stats.kpi7.cumulative);
+new Chart(document.getElementById("paretoChart"), {
+    data: {
+        labels: diagLabels,
+        datasets: [
+            { type:"bar", label:"Count", data:diagCounts,
+              backgroundColor:"#1b6ca8", borderRadius:4, yAxisID:"y" },
+            { type:"line", label:"Cumulative %", data:diagCumul,
+              borderColor:"#dc2626", backgroundColor:"transparent",
+              tension:0.4, pointRadius:4, yAxisID:"y2" }
+        ]
+    },
+    options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:"top", labels:{ boxWidth:12 } } },
+        scales:{
+            y:  { beginAtZero:true, grid:{ color:"#f1f5f9" } },
+            y2: { position:"right", beginAtZero:true, max:110,
+                  ticks:{ callback: v => v+"%" }, grid:{ display:false } },
+            x:  { ticks:{ maxRotation:30 }, grid:{ display:false } }
+        }
+    }
+});
+
+// ── Model Comparison Chart ─────────────────────────────────
+const modelNames   = Object.keys(stats.model_comparison);
+const metricColors = ["#1b6ca8","#16a34a","#dc2626","#7c3aed"];
+const metricNames  = ["accuracy","precision","recall","f1"];
+const metricLabels = ["Accuracy","Precision","Recall","F1"];
+new Chart(document.getElementById("modelChart"), {
+    type:"bar",
+    data:{
+        labels: modelNames,
+        datasets: metricNames.map((m, i) => ({
+            label: metricLabels[i],
+            data:  modelNames.map(n => stats.model_comparison[n][m]),
+            backgroundColor: metricColors[i],
+            borderRadius: 4
+        }))
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:"top", labels:{ boxWidth:12 } } },
+        scales:{
+            y:{ beginAtZero:true, max:100, ticks:{ callback: v=>v+"%" }, grid:{ color:"#f1f5f9" } },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ── Feature Importance Chart ───────────────────────────────
+const featLabels = Object.keys(stats.rf_importance);
+const featVals   = Object.values(stats.rf_importance);
+const sortedIdx  = featVals.map((_,i)=>i).sort((a,b)=>featVals[a]-featVals[b]);
+new Chart(document.getElementById("importanceChart"), {
+    type:"bar",
+    data:{
+        labels: sortedIdx.map(i=>featLabels[i]),
+        datasets:[{ label:"Importance", data:sortedIdx.map(i=>featVals[i]),
+                    backgroundColor:"#1b6ca8", borderRadius:4, borderSkipped:false }]
+    },
+    options:{
+        indexAxis:"y", responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+            x:{ beginAtZero:true, grid:{ color:"#f1f5f9" } },
+            y:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ── Approval Rate by Department ────────────────────────────
+const deptNames    = Object.keys(stats.dept_approval);
+const deptRates    = Object.values(stats.dept_approval);
+new Chart(document.getElementById("approvalChart"), {
+    type:"bar",
+    data:{
+        labels: deptNames,
+        datasets:[{ label:"Approval Rate (%)", data:deptRates,
+                    backgroundColor: deptRates.map(r => r>=75?"#16a34a":r>=60?"#ca8a04":"#dc2626"),
+                    borderRadius:6, borderSkipped:false }]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+            y:{ beginAtZero:true, max:100, ticks:{ callback: v=>v+"%" }, grid:{ color:"#f1f5f9" } },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ── Confidence Distribution (coding accuracy) ──────────────
+{% if stats.coding_stats %}
+const confLabels = Object.keys(stats.coding_stats.conf_dist);
+const confVals   = Object.values(stats.coding_stats.conf_dist);
+new Chart(document.getElementById("confChart"), {
+    type:"bar",
+    data:{
+        labels: confLabels,
+        datasets:[{ label:"Records", data:confVals,
+                    backgroundColor:["#dc2626","#f59e0b","#ca8a04","#16a34a","#0f9a6a"],
+                    borderRadius:4, borderSkipped:false }]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+            y:{ beginAtZero:true, grid:{ color:"#f1f5f9" } },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CDSS — Doctor Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0A1628;--panel:#0D1F3C;--card:#112240;--border:#1E3A5A;
+      --teal:#0891B2;--teallt:#22D3EE;--white:#F0F9FF;--gray:#64748B;
+      --muted:#90CAD8;--red:#DC2626;--green:#16A34A;--amber:#D97706;
+    }
+    body{background:var(--navy);color:var(--white);font-family:'Space Grotesk',sans-serif;}
+    nav{background:var(--panel);border-bottom:1px solid var(--border);
+        padding:0 2rem;display:flex;align-items:center;
+        justify-content:space-between;height:60px;}
+    .nav-brand{font-weight:700;font-size:1rem;color:var(--teallt);}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;margin-left:1.5rem;}
+    .nav-links a:hover{color:var(--teallt);}
+    .page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+    h1{font-size:1.5rem;font-weight:700;margin-bottom:.4rem;}
+    .sub{color:var(--muted);font-size:.88rem;margin-bottom:2rem;}
+    .section-hdr{font-size:.8rem;font-weight:700;letter-spacing:1px;
+                 color:var(--teallt);margin-bottom:.8rem;margin-top:2rem;}
+    table{width:100%;border-collapse:collapse;background:var(--card);
+          border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+    thead{background:var(--panel);}
+    th{padding:10px 14px;text-align:left;font-size:.75rem;font-weight:700;
+       letter-spacing:.5px;color:var(--muted);}
+    td{padding:10px 14px;font-size:.85rem;border-top:1px solid var(--border);}
+    tr:hover td{background:rgba(34,211,238,.04);}
+    .badge{display:inline-block;padding:3px 10px;border-radius:12px;
+           font-size:.72rem;font-weight:600;}
+    .b-pending {background:rgba(217,119,6,.15);color:var(--amber);border:1px solid rgba(217,119,6,.3);}
+    .b-approved{background:rgba(22,163,74,.15); color:#4ADE80; border:1px solid rgba(22,163,74,.3);}
+    .b-rejected {background:rgba(220,38,38,.15);color:#FCA5A5; border:1px solid rgba(220,38,38,.3);}
+    .b-modified {background:rgba(124,58,237,.15);color:#A78BFA;border:1px solid rgba(124,58,237,.3);}
+    .b-danger  {background:rgba(220,38,38,.15);color:#FCA5A5;}
+    .b-warning {background:rgba(217,119,6,.15);color:var(--amber);}
+    .b-success {background:rgba(22,163,74,.15);color:#4ADE80;}
+    .btn-sm{padding:5px 14px;border-radius:6px;font-size:.78rem;font-weight:600;
+            cursor:pointer;border:none;font-family:'Space Grotesk',sans-serif;
+            text-decoration:none;display:inline-block;transition:all .2s;}
+    .btn-teal{background:var(--teal);color:white;}
+    .btn-teal:hover{background:#0369A1;}
+    .empty{text-align:center;padding:3rem;color:var(--gray);font-size:.9rem;}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">CDSS — Doctor Portal</div>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/statistics">Statistics</a>
+    <a href="/doctor">Doctor Portal</a>
+  </div>
+</nav>
+<div class="page">
+  <h1>🩺 Doctor Review Portal</h1>
+  <p class="sub">Review AI-generated prescriptions — approve, modify, or reject before they reach patients.</p>
+
+  <div class="section-hdr">⏳ PENDING REVIEW ({{ pending|length }})</div>
+  {% if pending %}
+  <table>
+    <thead>
+      <tr>
+        <th>Patient ID</th><th>Date</th><th>Age</th><th>BMI</th>
+        <th>HbA1c</th><th>Glucose</th><th>Risk</th><th>Top Factor</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in pending %}
+      <tr>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;">{{ r.patient_id }}</td>
+        <td style="color:var(--muted);font-size:.78rem;">{{ r.created_at }}</td>
+        <td>{{ r.age }}</td>
+        <td>{{ r.bmi }}</td>
+        <td>{{ r.hba1c }}%</td>
+        <td>{{ r.blood_glucose }}</td>
+        <td>
+          <span class="badge {% if 'HIGH' in r.risk_label %}b-danger{% elif 'MEDIUM' in r.risk_label %}b-warning{% else %}b-success{% endif %}">
+            {{ r.risk_score }}%
+          </span>
+        </td>
+        <td style="color:var(--muted);font-size:.8rem;">{{ r.top_feature }}</td>
+        <td>
+          <a href="/doctor/review/{{ r.id }}" class="btn-sm btn-teal">Review →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">No pending prescriptions — all caught up!</div>
+  {% endif %}
+
+  <div class="section-hdr">✅ REVIEWED ({{ reviewed|length }})</div>
+  {% if reviewed %}
+  <table>
+    <thead>
+      <tr>
+        <th>Patient ID</th><th>Date</th><th>Age</th><th>Risk</th>
+        <th>Status</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reviewed %}
+      <tr>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;">{{ r.patient_id }}</td>
+        <td style="color:var(--muted);font-size:.78rem;">{{ r.created_at }}</td>
+        <td>{{ r.age }}</td>
+        <td>
+          <span class="badge {% if 'HIGH' in r.risk_label %}b-danger{% elif 'MEDIUM' in r.risk_label %}b-warning{% else %}b-success{% endif %}">
+            {{ r.risk_score }}%
+          </span>
+        </td>
+        <td>
+          <span class="badge
+            {% if r.status == 'APPROVED' %}b-approved
+            {% elif r.status == 'REJECTED' %}b-rejected
+            {% elif r.status == 'MODIFIED' %}b-modified
+            {% else %}b-pending{% endif %}">
+            {{ r.status }}
+          </span>
+        </td>
+        <td>
+          <a href="/doctor/review/{{ r.id }}" class="btn-sm btn-teal">View</a>
+          {% if r.status == 'APPROVED' or r.status == 'MODIFIED' %}
+          &nbsp;<a href="/download/{{ r.id }}" class="btn-sm"
+                   style="background:rgba(22,163,74,.15);color:#4ADE80;border:1px solid rgba(22,163,74,.3);">
+            ⬇ PDF
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">No reviewed records yet.</div>
+  {% endif %}
+</div>
+</body>
+</html>

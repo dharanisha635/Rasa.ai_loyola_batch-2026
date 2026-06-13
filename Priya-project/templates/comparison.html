@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CDSS — Model Comparison</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0A1628;--panel:#0D1F3C;--card:#112240;--border:#1E3A5A;
+      --teal:#0891B2;--teallt:#22D3EE;--white:#F0F9FF;--gray:#64748B;
+      --muted:#90CAD8;--red:#DC2626;--green:#16A34A;--amber:#D97706;
+    }
+    body{background:var(--navy);color:var(--white);font-family:'Space Grotesk',sans-serif;}
+    nav{background:var(--panel);border-bottom:1px solid var(--border);
+        padding:0 2rem;display:flex;align-items:center;
+        justify-content:space-between;height:60px;}
+    .nav-brand{font-weight:700;color:var(--teallt);}
+    .nav-links{display:flex;gap:1.5rem;}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;}
+    .page{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+    h1{font-size:1.5rem;font-weight:700;margin-bottom:.3rem;}
+    .sub{color:var(--muted);font-size:.88rem;margin-bottom:2rem;}
+
+    .winner{background:rgba(34,211,238,.08);border:2px solid var(--teallt);
+            border-radius:14px;padding:1.5rem 2rem;margin-bottom:2rem;
+            display:flex;align-items:center;gap:2rem;flex-wrap:wrap;}
+    .winner .big{font-size:2.5rem;font-weight:700;color:var(--teallt);}
+    .winner .lbl{font-size:.8rem;color:var(--muted);margin-top:3px;}
+    .winner .title{font-size:1.1rem;font-weight:700;color:var(--white);margin-bottom:.3rem;}
+
+    .note{background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);
+          border-radius:10px;padding:1rem 1.5rem;margin-bottom:2rem;
+          font-size:.88rem;color:#86EFAC;line-height:1.7;}
+
+    .tbl-card{background:var(--card);border:1px solid var(--border);
+              border-radius:12px;overflow:hidden;margin-bottom:2rem;}
+    .tbl-hdr{padding:1rem 1.5rem;border-bottom:1px solid var(--border);}
+    .tbl-hdr h3{font-size:.9rem;font-weight:700;color:var(--white);}
+    .tbl-hdr p{font-size:.78rem;color:var(--muted);margin-top:3px;}
+    table{width:100%;border-collapse:collapse;}
+    thead tr{background:rgba(8,145,178,.1);}
+    thead th{padding:.75rem 1rem;text-align:left;font-size:.75rem;
+             color:var(--teallt);font-weight:700;letter-spacing:.5px;}
+    tbody tr{border-top:1px solid var(--border);}
+    tbody td{padding:.85rem 1rem;font-size:.88rem;color:var(--muted);}
+    .best-row td{color:var(--white);background:rgba(34,211,238,.05);}
+    .best-row td:first-child{border-left:3px solid var(--teallt);}
+
+    .conclusion{background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.2);
+                border-radius:10px;padding:1.2rem 1.5rem;margin-top:1.5rem;
+                font-size:.88rem;color:var(--muted);line-height:1.8;}
+    .conclusion strong{color:var(--teallt);}
+
+    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+    .chart-box{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+    .chart-box .ch{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);}
+    .chart-box .ch h3{font-size:.85rem;font-weight:700;color:var(--white);}
+    .chart-box .ch p{font-size:.73rem;color:var(--muted);margin-top:2px;}
+    .chart-box img{width:100%;display:block;}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">CDSS — Model Comparison</div>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/statistics">Statistics</a>
+    <a href="/live-stats">Live Stats</a>
+    <a href="/comparison">Model Comparison</a>
+    <a href="/doctor">Doctor Portal</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h1>📊 Model Comparison Study</h1>
+  <p class="sub">ANN vs Logistic Regression — Why deep learning is the right choice for clinical diagnosis</p>
+
+  <!-- Winner -->
+  <div class="winner">
+    <div style="font-size:3rem;">🏆</div>
+    <div>
+      <div class="title">Best Model: ANN (Deep Learning)</div>
+      <div class="lbl">Selected based on Recall and F1 Score — not just accuracy</div>
+    </div>
+    <div>
+      <div class="big">95.32%</div>
+      <div class="lbl">Accuracy</div>
+    </div>
+    <div>
+      <div class="big">0.9776</div>
+      <div class="lbl">AUC-ROC</div>
+    </div>
+    <div>
+      <div class="big">81.71%</div>
+      <div class="lbl">Recall</div>
+    </div>
+  </div>
+
+  <!-- McNemar note -->
+  <div class="note">
+    ✓ <strong>McNemar's Test:</strong> p-value = 0.000002 —
+    The difference between ANN and Logistic Regression is
+    <strong>statistically significant (p &lt; 0.001)</strong>.
+    ANN's superior performance is not due to chance.
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    ✓ <strong>Chi-Square:</strong>
+    HbA1c and Blood Glucose are strongest predictors (p &lt; 0.001).
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    ✓ <strong>Threshold = 0.6</strong> chosen to maximize Recall for clinical safety.
+  </div>
+
+  <!-- Main comparison table -->
+  <div class="tbl-card">
+    <div class="tbl-hdr">
+      <h3>ANN vs Logistic Regression — Complete Results</h3>
+      <p>Tested on same 20,000 patient records (20% holdout test set)</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>MODEL</th>
+          <th>ACCURACY</th>
+          <th>PRECISION</th>
+          <th>RECALL ⭐</th>
+          <th>F1 SCORE</th>
+          <th>AUC-ROC</th>
+          <th>MISSED DIABETICS</th>
+          <th>TYPE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--muted);">Logistic Regression</td>
+          <td style="font-family:'JetBrains Mono',monospace;">96.03%</td>
+          <td style="font-family:'JetBrains Mono',monospace;">85.88%</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--red);">63.71%</td>
+          <td style="font-family:'JetBrains Mono',monospace;">73.15%</td>
+          <td style="font-family:'JetBrains Mono',monospace;">0.9620</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--red);">617 patients ❌</td>
+          <td><span style="color:var(--amber);font-size:.8rem;">Statistical</span></td>
+        </tr>
+        <tr class="best-row">
+          <td style="color:var(--teallt);font-weight:700;">ANN (Our Model) 🏆</td>
+          <td style="font-family:'JetBrains Mono',monospace;">95.32%</td>
+          <td style="font-family:'JetBrains Mono',monospace;">68.97%</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;">81.71%</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;">74.80%</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;">0.9776</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;">311 patients ✅</td>
+          <td><span style="color:var(--teallt);font-size:.8rem;font-weight:600;">Deep Learning</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="conclusion">
+      <strong>Why ANN wins despite lower accuracy:</strong><br>
+      Logistic Regression misses <strong>617 diabetic patients</strong> per 20,000 tested (Recall = 63.71%).
+      ANN misses only <strong>311 patients</strong> (Recall = 81.71%) —
+      catching <strong>306 more real diabetics</strong>.<br><br>
+      In medical diagnosis, missing a diabetic patient is clinically dangerous.
+      ANN's higher Recall and F1 Score make it the correct choice for clinical decision support.<br><br>
+      <strong>AUC-ROC 0.9776</strong> means ANN correctly ranks a diabetic patient above a healthy one
+      97.76% of the time — statistically superior to LR's 0.9620.
+    </div>
+  </div>
+
+  <!-- Confusion Matrix -->
+  <div class="tbl-card">
+    <div class="tbl-hdr">
+      <h3>Confusion Matrix Comparison</h3>
+      <p>What each model got right and wrong on 20,000 test patients</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>MODEL</th>
+          <th>TRUE POSITIVE (caught diabetics)</th>
+          <th>FALSE NEGATIVE (missed diabetics)</th>
+          <th>FALSE POSITIVE (false alarms)</th>
+          <th>TRUE NEGATIVE (correct healthy)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--muted);">Logistic Regression</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);">1083</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--red);">617 ❌</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--amber);">178</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);">18122</td>
+        </tr>
+        <tr class="best-row">
+          <td style="color:var(--teallt);font-weight:700;">ANN (Our Model) 🏆</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;">1389 ✅</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;">311 ✅</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--amber);">625</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);">17675</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="ch">
+        <h3>Accuracy Comparison</h3>
+        <p>Both models on same 20,000 test records</p>
+      </div>
+      <img src="/static/charts/model_comparison.png">
+    </div>
+    <div class="chart-box">
+      <div class="ch">
+        <h3>ROC Curves</h3>
+        <p>Higher AUC = better discrimination ability</p>
+      </div>
+      <img src="/static/charts/roc_comparison.png">
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

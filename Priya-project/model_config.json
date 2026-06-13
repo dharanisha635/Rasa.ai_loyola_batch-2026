@@ -1,0 +1,19 @@
+
+  "feature_names": [
+    "gender",
+    "age",
+    "hypertension",
+    "heart_disease",
+    "smoking_history",
+    "bmi",
+    "HbA1c_level",
+    "blood_glucose_level"
+  ],
+  "best_threshold": 0.2332,
+  "accuracy": 0.9056,
+  "auc_roc": 0.9773,
+  "train_size": 80000,
+  "test_size": 20000,
+  "model_file": "diabetes_new_model.h5",
+  "scaler_file": "new_scaler.pkl"
+}

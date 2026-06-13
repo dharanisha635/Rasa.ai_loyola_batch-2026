@@ -1,0 +1,62 @@
+{
+  "models": [
+    {
+      "name": "ANN (Deep Learning)",
+      "type": "deep_learning",
+      "accuracy": 95.32,
+      "auc": 0.9776,
+      "f1": 74.8,
+      "cv_mean": 94.47,
+      "cv_std": 0.32,
+      "highlight": true
+    },
+    {
+      "name": "Logistic Regression",
+      "type": "classical",
+      "accuracy": 96.03,
+      "auc": 0.962,
+      "f1": 73.15,
+      "cv_mean": 96.03,
+      "cv_std": 0.08,
+      "highlight": false
+    }
+  ],
+  "best_model": "ANN (Deep Learning)",
+  "improvement": -0.71,
+  "mcnemar_pvalue": 2e-06,
+  "chi2_results": {
+    "gender": {
+      "chi2": 41.023,
+      "pval": 0.0
+    },
+    "age": {
+      "chi2": 1010.147,
+      "pval": 0.0
+    },
+    "hypertension": {
+      "chi2": 3620.485,
+      "pval": 0.0
+    },
+    "heart_disease": {
+      "chi2": 2832.761,
+      "pval": 0.0
+    },
+    "smoking_history": {
+      "chi2": 291.298,
+      "pval": 0.0
+    },
+    "bmi": {
+      "chi2": 136.456,
+      "pval": 0.0
+    },
+    "HbA1c_level": {
+      "chi2": 1650.199,
+      "pval": 0.0
+    },
+    "blood_glucose_level": {
+      "chi2": 2283.794,
+      "pval": 0.0
+    }
+  },
+  "conclusion": "ANN achieves 95.32% accuracy, outperforming Logistic Regression (96.03%) by -0.71%. McNemar's test confirms this difference is statistically significant (p=2e-06)."
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CDSS — Statistics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0A1628;--panel:#0D1F3C;--card:#112240;--border:#1E3A5A;
+      --teal:#0891B2;--teallt:#22D3EE;--white:#F0F9FF;--gray:#64748B;
+      --muted:#90CAD8;--red:#DC2626;--green:#16A34A;--amber:#D97706;
+    }
+    body{background:var(--navy);color:var(--white);font-family:'Space Grotesk',sans-serif;}
+    nav{background:var(--panel);border-bottom:1px solid var(--border);
+        padding:0 2rem;display:flex;align-items:center;
+        justify-content:space-between;height:60px;}
+    .nav-brand{font-weight:700;font-size:1rem;color:var(--teallt);}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;margin-left:1.5rem;}
+    .page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+    h1{font-size:1.5rem;font-weight:700;margin-bottom:.3rem;}
+    .sub{color:var(--muted);font-size:.88rem;margin-bottom:2rem;}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;
+          padding:1.2rem;text-align:center;}
+    .stat .val{font-size:1.8rem;font-weight:700;color:var(--teallt);}
+    .stat .lbl{font-size:.75rem;color:var(--muted);margin-top:5px;line-height:1.4;}
+
+    .cards-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+    .card-hdr{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);background:var(--panel);}
+    .card-hdr h3{font-size:.85rem;font-weight:700;color:var(--teallt);letter-spacing:.5px;}
+    .card-body{padding:1.2rem;}
+    .row-item{display:flex;justify-content:space-between;align-items:center;
+              padding:.5rem 0;border-bottom:1px solid rgba(30,58,90,.5);font-size:.85rem;}
+    .row-item:last-child{border-bottom:none;}
+    .row-item .k{color:var(--muted);}
+    .row-item .v{font-weight:600;font-family:'JetBrains Mono',monospace;}
+
+    .model-card{background:var(--card);border:1px solid var(--border);
+                border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;}
+    .model-card h3{font-size:.85rem;font-weight:700;color:var(--teallt);
+                   letter-spacing:.5px;margin-bottom:1rem;}
+    .metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem;}
+    .metric{text-align:center;background:var(--panel);border-radius:8px;padding:.8rem;}
+    .metric .mv{font-size:1.2rem;font-weight:700;color:var(--teallt);}
+    .metric .ml{font-size:.7rem;color:var(--muted);margin-top:3px;}
+
+    .no-stats{text-align:center;padding:4rem;color:var(--gray);}
+    @media(max-width:700px){
+      .stats-grid{grid-template-columns:repeat(2,1fr);}
+      .cards-row{grid-template-columns:1fr;}
+      .metric-row{grid-template-columns:repeat(3,1fr);}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">CDSS — Statistics</div>
+  <div class="nav-links">
+    <a href="/">Predict</a>
+    <a href="/statistics">Statistics</a>
+    <a href="/doctor">Doctor Portal</a>
+  </div>
+</nav>
+<div class="page">
+  <h1>📊 Dataset & Model Statistics</h1>
+  <p class="sub">Training data analysis and model performance metrics</p>
+
+  <!-- Model Performance -->
+  <div class="model-card">
+    <h3>MODEL PERFORMANCE — ANN (100K Dataset)</h3>
+    <div class="metric-row">
+      <div class="metric">
+        <div class="mv">{{ "%.1f"|format(config.get('accuracy',0)*100) }}%</div>
+        <div class="ml">Accuracy</div>
+      </div>
+      <div class="metric">
+        <div class="mv">{{ "%.3f"|format(config.get('auc_roc',0)) }}</div>
+        <div class="ml">AUC-ROC</div>
+      </div>
+      <div class="metric">
+        <div class="mv">{{ config.get('train_size', 'N/A') }}</div>
+        <div class="ml">Train Size</div>
+      </div>
+      <div class="metric">
+        <div class="mv">{{ config.get('test_size', 'N/A') }}</div>
+        <div class="ml">Test Size</div>
+      </div>
+      <div class="metric">
+        <div class="mv">{{ "%.3f"|format(config.get('best_threshold', 0.5)) }}</div>
+        <div class="ml">Best Threshold</div>
+      </div>
+    </div>
+  </div>
+
+  {% if stats %}
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="val">{{ stats.get('total_patients', 'N/A') }}</div>
+      <div class="lbl">Total Patients<br>in Dataset</div>
+    </div>
+    <div class="stat">
+      <div class="val">{{ stats.get('diabetic_pct', 'N/A') }}%</div>
+      <div class="lbl">Diabetes<br>Prevalence</div>
+    </div>
+    <div class="stat">
+      <div class="val">{{ stats.get('avg_age', 'N/A') }}</div>
+      <div class="lbl">Average<br>Patient Age</div>
+    </div>
+    <div class="stat">
+      <div class="val">{{ stats.get('avg_bmi', 'N/A') }}</div>
+      <div class="lbl">Average<br>BMI</div>
+    </div>
+  </div>
+
+  <div class="cards-row">
+    <div class="card">
+      <div class="card-hdr"><h3>GLYCEMIC MARKERS</h3></div>
+      <div class="card-body">
+        <div class="row-item">
+          <span class="k">Mean HbA1c (diabetic)</span>
+          <span class="v" style="color:var(--red);">{{ stats.get('mean_hba1c_diabetic','N/A') }}%</span>
+        </div>
+        <div class="row-item">
+          <span class="k">Mean HbA1c (non-diabetic)</span>
+          <span class="v" style="color:var(--green);">{{ stats.get('mean_hba1c_normal','N/A') }}%</span>
+        </div>
+        <div class="row-item">
+          <span class="k">Mean Glucose (diabetic)</span>
+          <span class="v" style="color:var(--red);">{{ stats.get('mean_glucose_diabetic','N/A') }}</span>
+        </div>
+        <div class="row-item">
+          <span class="k">Mean Glucose (non-diabetic)</span>
+          <span class="v" style="color:var(--green);">{{ stats.get('mean_glucose_normal','N/A') }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><h3>RISK FACTOR PREVALENCE</h3></div>
+      <div class="card-body">
+        <div class="row-item">
+          <span class="k">Hypertension rate</span>
+          <span class="v">{{ stats.get('hypertension_pct','N/A') }}%</span>
+        </div>
+        <div class="row-item">
+          <span class="k">Heart disease rate</span>
+          <span class="v">{{ stats.get('heart_disease_pct','N/A') }}%</span>
+        </div>
+        <div class="row-item">
+          <span class="k">Current smokers</span>
+          <span class="v">{{ stats.get('current_smoker_pct','N/A') }}%</span>
+        </div>
+        <div class="row-item">
+          <span class="k">BMI ≥ 30 (obese)</span>
+          <span class="v">{{ stats.get('obese_pct','N/A') }}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="no-stats">
+    <p>No statistics data available.</p>
+    <p style="font-size:.82rem;margin-top:.5rem;">
+      Run <code>statistics_analysis.py</code> to generate stats_summary.json
+    </p>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>
