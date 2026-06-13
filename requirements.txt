@@ -1,0 +1,9 @@
+pillow
+flask
+python-dotenv
+mistralai
+opencv-python
+numpy
+scipy
+pandas
+scikit-learn

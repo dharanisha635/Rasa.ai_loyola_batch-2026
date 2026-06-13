@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroStat AI — Analytics Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+<nav class="nav-bar">
+    <div class="nav-inner">
+        <div class="nav-logo">
+            <span class="logo-leaf">🌿</span>
+            <span class="logo-text">AgroStat AI</span>
+        </div>
+        <a href="/" class="nav-badge" style="text-decoration:none;">← Back to Scanner</a>
+    </div>
+</nav>
+
+<main class="main-wrap">
+
+    <section class="hero" style="margin-bottom:36px;">
+        <span class="hero-eyebrow">Historical Data</span>
+        <h1 class="hero-title">Analytics <span class="hero-gradient">Dashboard</span></h1>
+        <p class="hero-sub">Real statistics computed from all scans stored in your database.</p>
+    </section>
+
+    {% if total == 0 %}
+    <!-- Empty state — no scans yet -->
+    <div class="result-card" style="text-align:center; padding:60px 28px; max-width:540px;">
+        <div style="font-size:48px; margin-bottom:16px;">📊</div>
+        <h2 style="font-size:20px; font-weight:700; margin-bottom:10px;">No scan data yet</h2>
+        <p style="color:var(--t3); font-size:14px; line-height:1.7;">
+            Go back to the scanner, upload a leaf image, and your first scan will appear here automatically.
+            After a few scans all charts will populate with real data.
+        </p>
+        <a href="/" style="display:inline-block; margin-top:24px; padding:12px 28px;
+            background:linear-gradient(135deg,#1aaa55,#2ecc71); color:#fff;
+            border-radius:12px; font-weight:700; text-decoration:none; font-size:15px;">
+            Go Scan a Leaf →
+        </a>
+    </div>
+
+    {% else %}
+
+    <!-- ── METRIC CARDS ── -->
+    <div class="analytics-metrics">
+        <div class="metric-card">
+            <div class="metric-val">{{ total }}</div>
+            <div class="metric-lbl">Total Scans</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-val">
+                {% if prevalence %}
+                    {{ prevalence | selectattr('disease', 'ne', 'Healthy') | list | length }}
+                {% else %}0{% endif %}
+            </div>
+            <div class="metric-lbl">Diseases Found</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-val" style="color:#f87171;">
+                {% if sev_stats.mean is defined %}
+                    {{ sev_stats.mean }}
+                {% else %}—{% endif %}
+            </div>
+            <div class="metric-lbl">Mean Severity</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-val" style="color:
+                {% if prf_metrics.f1 %}#2ecc71{% else %}var(--t3){% endif %};">
+                {% if prf_metrics.f1 %}{{ prf_metrics.f1 }}%{% else %}—{% endif %}
+            </div>
+            <div class="metric-lbl">F1 Score</div>
+            {% if not prf_metrics.f1 %}
+            <div class="metric-note">Need {{ 5 - prf_metrics.sample_size }} more feedbacks</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── ROW 1: Disease Frequency + Prevalence Rate ── -->
+    <div class="analytics-grid-2">
+
+        <div class="result-card">
+            <h3 class="chart-title">Disease Frequency Distribution</h3>
+            <p class="chart-sub">How many times each disease was detected across all scans</p>
+            {% if prevalence %}
+            <div style="height:260px; position:relative;">
+                <canvas id="freqChart"></canvas>
+            </div>
+            {% else %}
+            <p class="no-data">No disease data yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="result-card">
+            <h3 class="chart-title">Disease Prevalence Rate</h3>
+            <p class="chart-sub">Percentage of total scans each disease represents</p>
+            {% if prevalence %}
+            <div class="prev-list">
+                {% for item in prevalence %}
+                <div class="prev-row">
+                    <span class="prev-disease">{{ item.disease }}</span>
+                    <div class="prev-track">
+                        <div class="prev-fill" style="width:{{ item.prevalence_rate }}%;"></div>
+                    </div>
+                    <span class="prev-rate">{{ item.prevalence_rate }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="no-data">No data yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- ── ROW 2: Severity Analysis ── -->
+    <div class="result-card">
+        <h3 class="chart-title">Disease Severity Analysis</h3>
+        <p class="chart-sub">Statistical summary of severity scores across all scans</p>
+        {% if sev_stats %}
+        <div class="sev-stats-grid">
+            <div class="sev-stat-box">
+                <div class="sev-stat-val" style="color:#2ecc71;">{{ sev_stats.mean }}</div>
+                <div class="sev-stat-lbl">Mean</div>
+                <div class="sev-stat-desc">Average severity score</div>
+            </div>
+            <div class="sev-stat-box">
+                <div class="sev-stat-val" style="color:#60a5fa;">{{ sev_stats.median }}</div>
+                <div class="sev-stat-lbl">Median</div>
+                <div class="sev-stat-desc">Middle value</div>
+            </div>
+            <div class="sev-stat-box">
+                <div class="sev-stat-val" style="color:#f59e0b;">{{ sev_stats.stdev }}</div>
+                <div class="sev-stat-lbl">Std Deviation</div>
+                <div class="sev-stat-desc">Spread of scores</div>
+            </div>
+            <div class="sev-stat-box">
+                <div class="sev-stat-val" style="color:#a78bfa;">{{ sev_stats.variance }}</div>
+                <div class="sev-stat-lbl">Variance</div>
+                <div class="sev-stat-desc">Statistical dispersion</div>
+            </div>
+            <div class="sev-stat-box">
+                <div class="sev-stat-val" style="color:#4ade80;">{{ sev_stats.min }}</div>
+                <div class="sev-stat-lbl">Minimum</div>
+                <div class="sev-stat-desc">Lowest score recorded</div>
+            </div>
+            <div class="sev-stat-box">
+                <div class="sev-stat-val" style="color:#f87171;">{{ sev_stats.max }}</div>
+                <div class="sev-stat-lbl">Maximum</div>
+                <div class="sev-stat-desc">Highest score recorded</div>
+            </div>
+        </div>
+        {% else %}
+        <p class="no-data">Not enough data yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ── ROW 3: Precision / Recall / F1 ── -->
+    <div class="result-card">
+        <h3 class="chart-title">Precision / Recall / F1 Analysis</h3>
+        <p class="chart-sub">
+            Computed from user feedback on diagnosis correctness —
+            {% if prf_metrics.sample_size %}
+                {{ prf_metrics.sample_size }} feedback responses collected
+            {% else %}
+                0 feedback responses collected
+            {% endif %}
+        </p>
+
+        {% if prf_metrics.f1 %}
+        <div class="prf-real-grid">
+            <div class="prf-real-box">
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="36"/>
+                        <circle class="ring-fill green-ring" cx="45" cy="45" r="36"
+                            stroke-dasharray="{{ (prf_metrics.precision / 100) * 226.19 }} 226.19"/>
+                    </svg>
+                    <span class="ring-val">{{ prf_metrics.precision }}%</span>
+                </div>
+                <div class="prf-lbl">Precision</div>
+                <div class="prf-desc">Of all positive predictions,<br>how many were correct</div>
+            </div>
+            <div class="prf-real-box">
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="36"/>
+                        <circle class="ring-fill blue-ring" cx="45" cy="45" r="36"
+                            stroke-dasharray="{{ (prf_metrics.recall / 100) * 226.19 }} 226.19"/>
+                    </svg>
+                    <span class="ring-val">{{ prf_metrics.recall }}%</span>
+                </div>
+                <div class="prf-lbl">Recall</div>
+                <div class="prf-desc">Of all actual diseases,<br>how many were detected</div>
+            </div>
+            <div class="prf-real-box">
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="36"/>
+                        <circle class="ring-fill amber-ring" cx="45" cy="45" r="36"
+                            stroke-dasharray="{{ (prf_metrics.f1 / 100) * 226.19 }} 226.19"/>
+                    </svg>
+                    <span class="ring-val">{{ prf_metrics.f1 }}%</span>
+                </div>
+                <div class="prf-lbl">F1 Score</div>
+                <div class="prf-desc">Harmonic mean of<br>precision and recall</div>
+            </div>
+        </div>
+        <div class="prf-feedback-summary">
+            <span style="color:#2ecc71;">✓ {{ prf_metrics.correct }} correct</span>
+            <span style="color:var(--t3);">·</span>
+            <span style="color:#f87171;">✗ {{ prf_metrics.incorrect }} incorrect</span>
+            <span style="color:var(--t3);">·</span>
+            <span style="color:var(--t2);">{{ prf_metrics.sample_size }} total feedback</span>
+        </div>
+        {% else %}
+        <div class="prf-waiting">
+            <div style="font-size:36px; margin-bottom:12px;">🎯</div>
+            <p style="font-size:15px; font-weight:600; margin-bottom:8px;">
+                Need {{ 5 - (prf_metrics.sample_size or 0) }} more feedback responses
+            </p>
+            <p style="font-size:13px; color:var(--t3); line-height:1.7;">
+                After each scan, click "Yes, Correct" or "No, Incorrect" on the diagnosis page.
+                Once you have 5 responses, real Precision / Recall / F1 will appear here.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── ROW 4: Disease Trend ── -->
+    <div class="result-card">
+        <h3 class="chart-title">Disease Trend Analysis — Last 30 Days</h3>
+        <p class="chart-sub">7-day moving average of severity scores from real scan history</p>
+        {% if trend_labels %}
+        <div style="height:240px; position:relative;">
+            <canvas id="trendChart"></canvas>
+        </div>
+        {% else %}
+        <div class="no-data-box">
+            <p>Not enough scan history yet. Trend will appear after scans on multiple days.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── ROW 5: Correlation placeholder ── -->
+    <div class="result-card">
+        <h3 class="chart-title">Correlation Analysis</h3>
+        <p class="chart-sub">Temperature & Humidity vs Disease Severity — requires Weather API integration</p>
+        <div class="corr-placeholder">
+            <div style="font-size:36px; margin-bottom:12px;">🌡️</div>
+            <p style="font-size:15px; font-weight:600; margin-bottom:8px;">Weather API not connected yet</p>
+            <p style="font-size:13px; color:var(--t3); line-height:1.7; max-width:420px; margin:0 auto;">
+                To enable real correlation analysis, integrate OpenWeatherMap API to record
+                temperature and humidity at the time of each scan. Once connected, Pearson r
+                will be computed automatically.
+            </p>
+            <div class="corr-hint-row">
+                <div class="corr-hint-box">
+                    <div style="font-size:22px;">r = ?</div>
+                    <div style="font-size:11px; color:var(--t3); margin-top:4px;">Temp vs Severity</div>
+                </div>
+                <div class="corr-hint-box">
+                    <div style="font-size:22px;">r = ?</div>
+                    <div style="font-size:11px; color:var(--t3); margin-top:4px;">Humidity vs Severity</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+</main>
+
+<footer class="footer">
+    AgroStat AI · Analytics Dashboard · Data from local SQLite database
+</footer>
+
+<script>
+{% if total > 0 and prevalence %}
+
+const GRID = 'rgba(255,255,255,0.07)';
+const TEXT = 'rgba(255,255,255,0.50)';
+
+// ── Frequency Distribution Bar Chart ──
+const diseases = {{ prevalence | map(attribute='disease') | list | tojson }};
+const counts   = {{ prevalence | map(attribute='count')   | list | tojson }};
+const COLORS   = ['#f87171','#fb923c','#fbbf24','#a78bfa','#60a5fa','#34d399','#f472b6','#2ecc71','#e879f9','#38bdf8'];
+
+new Chart(document.getElementById('freqChart'), {
+    type: 'bar',
+    data: {
+        labels: diseases,
+        datasets: [{
+            data: counts,
+            backgroundColor: diseases.map((_, i) => COLORS[i % COLORS.length] + '99'),
+            borderColor:     diseases.map((_, i) => COLORS[i % COLORS.length]),
+            borderWidth: 2,
+            borderRadius: 7
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(6,26,14,0.95)',
+                titleColor: '#fff',
+                bodyColor: 'rgba(255,255,255,0.75)'
+            }
+        },
+        scales: {
+            x: { grid: { color: GRID }, ticks: { color: TEXT, font: { size: 11 }, maxRotation: 30 } },
+            y: { grid: { color: GRID }, ticks: { color: TEXT, font: { size: 11 } }, beginAtZero: true }
+        }
+    }
+});
+
+{% endif %}
+
+{% if trend_labels %}
+
+// ── Trend Chart ──
+const trendLabels = {{ trend_labels | tojson }};
+const trendData   = {{ trend_smoothed | tojson }};
+
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: trendLabels,
+        datasets: [{
+            label: '7-day Moving Avg Severity',
+            data: trendData,
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46,204,113,0.10)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#2ecc71',
+            pointRadius: 4
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(6,26,14,0.95)',
+                titleColor: '#fff',
+                bodyColor: 'rgba(255,255,255,0.75)'
+            }
+        },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.07)' }, ticks: { color: 'rgba(255,255,255,0.50)', font: { size: 11 } } },
+            y: {
+                grid: { color: 'rgba(255,255,255,0.07)' },
+                ticks: { color: 'rgba(255,255,255,0.50)', font: { size: 11 } },
+                min: 0, max: 100,
+                title: { display: true, text: 'Severity Score', color: 'rgba(255,255,255,0.50)' }
+            }
+        }
+    }
+});
+
+{% endif %}
+</script>
+
+</body>
+</html>

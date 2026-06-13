@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroStat AI — Plant Disease Intelligence</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+<nav class="nav-bar">
+    <div class="nav-inner">
+        <a href="/analytics" class="nav-analytics-link">📊 Analytics</a>
+        <div class="nav-logo">
+            <span class="logo-leaf">🌿</span>
+            <span class="logo-text">AgroStat AI</span>
+        </div>
+        <span class="nav-badge">Beta</span>
+    </div>
+</nav>
+
+<main class="main-wrap">
+
+    <!-- HERO -->
+    <section class="hero">
+        <span class="hero-eyebrow">Powered by Pixtral Vision AI</span>
+        <h1 class="hero-title">Plant Disease<br><span class="hero-gradient">Intelligence</span></h1>
+        <p class="hero-sub">Upload a leaf image. Get instant diagnosis, disease analytics, and crop advisory — all from a single scan.</p>
+    </section>
+
+    <!-- UPLOAD -->
+    <section class="upload-section">
+        <form method="POST" enctype="multipart/form-data" id="upload-form">
+            <div class="drop-zone" id="drop-zone">
+                <div class="drop-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <p class="drop-title">Drop your leaf image here</p>
+                <p class="drop-sub">or click to browse — JPG, PNG, WEBP</p>
+                <input type="file" name="file" id="file-input" accept="image/*" required>
+            </div>
+
+            <div class="file-preview" id="file-preview" style="display:none;">
+                <img id="preview-img" src="" alt="Preview">
+                <div class="file-info">
+                    <span id="file-name" class="file-name-text"></span>
+                    <button type="button" class="clear-btn" id="clear-btn">✕</button>
+                </div>
+            </div>
+
+            <button type="submit" class="analyze-btn" id="analyze-btn">
+                <span class="btn-text">Analyze Leaf</span>
+                <span class="btn-icon">→</span>
+            </button>
+        </form>
+    </section>
+
+    <!-- LOADING -->
+    <div class="loading-screen" id="loading-screen" style="display:none;">
+        <div class="spinner-ring"></div>
+        <p class="loading-text">Analyzing leaf with AI vision...</p>
+        <p class="loading-sub">This may take a few seconds</p>
+    </div>
+
+    <!-- ERROR -->
+    {% if error %}
+    <div class="error-card">
+        <span class="error-icon">⚠</span>
+        <div>
+            <p class="error-title">Analysis Failed</p>
+            <p class="error-msg">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- RESULTS -->
+    {% if data %}
+    <section class="results-section">
+
+        <!-- TOP ROW: image + identity -->
+        <div class="top-row">
+            {% if image_path %}
+            <div class="result-card image-card">
+                <span class="card-label">Analyzed Image</span>
+                <img src="{{ image_path | urlencode }}" alt="Uploaded Leaf" class="leaf-image">
+            </div>
+            {% endif %}
+
+            <div class="result-card identity-panel">
+                <div class="identity-row">
+                    <span class="identity-label">🌿 Plant Identified</span>
+                    <span class="identity-value">{{ data.plant_name }}</span>
+                </div>
+                <div class="id-divider"></div>
+                <div class="identity-row">
+                    <span class="identity-label">🦠 Disease Detected</span>
+                    <span class="identity-value">{{ data.disease }}</span>
+                </div>
+                <div class="id-divider"></div>
+                <div class="identity-row">
+                    <span class="identity-label">⚠️ Severity Level</span>
+                    <span class="severity-pill" style="background:{{ data.severity_color }}22; color:{{ data.severity_color }}; border:1px solid {{ data.severity_color }}55;">{{ data.severity_level }}</span>
+                </div>
+                <div class="id-divider"></div>
+                <div class="identity-row">
+                    <span class="identity-label">📋 Health Summary</span>
+                    <span class="identity-summary">{{ data.summary }}</span>
+                </div>
+                {% if data.correction_applied %}
+                <div class="correction-note">
+                    <span class="correction-icon">🧠</span>
+                    <span class="correction-text">{{ data.correction_note }} <em>(was: {{ data.original_ai_plant }})</em></span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- CAUSE SECTION -->
+        <div class="result-card cause-card">
+            <div class="cause-header">
+                <span class="cause-icon">🔬</span>
+                <span class="cause-title">Why Did This Disease Occur?</span>
+            </div>
+            <p class="cause-text">{{ data.cause }}</p>
+            <div class="cause-env-row">
+                <div class="env-badge">
+                    <span class="env-icon">🌡️</span>
+                    <div>
+                        <div class="env-label">Favourable Temperature</div>
+                        <div class="env-val">{{ data.temp_min }}°C – {{ data.temp_max }}°C</div>
+                    </div>
+                </div>
+                <div class="env-badge">
+                    <span class="env-icon">💧</span>
+                    <div>
+                        <div class="env-label">Favourable Humidity</div>
+                        <div class="env-val">{{ data.hum_min }}% – {{ data.hum_max }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADVISORY ROW: remedies + precautions -->
+        <div class="advisory-row">
+            <div class="result-card advisory-card">
+                <div class="advisory-header">
+                    <span>💊</span>
+                    <span class="advisory-title">Remedies</span>
+                </div>
+                <ul class="advisory-list">
+                    {% for item in data.remedies %}
+                    <li class="advisory-item"><span class="dot green-dot"></span><span>{{ item }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="result-card advisory-card">
+                <div class="advisory-header">
+                    <span>🛡️</span>
+                    <span class="advisory-title">Precautions</span>
+                </div>
+                <ul class="advisory-list">
+                    {% for item in data.precautions %}
+                    <li class="advisory-item"><span class="dot amber-dot"></span><span>{{ item }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════
+             ANALYTICS SECTION
+        ════════════════════════════════════════ -->
+        <div class="analytics-header">
+            <h2 class="analytics-title">📊 Disease Analytics</h2>
+            <p class="analytics-sub">Statistical analysis computed from this scan's AI diagnosis</p>
+        </div>
+
+        <!-- ROW 1: Confidence + Risk + Recovery rings -->
+        <div class="stats-trio">
+            <div class="result-card stat-card">
+                <span class="stat-label">Confidence Score</span>
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="36"/>
+                        <circle class="ring-fill green-ring" cx="45" cy="45" r="36"
+                            stroke-dasharray="{{ (data.confidence / 100) * 226.19 }} 226.19"/>
+                    </svg>
+                    <span class="ring-val">{{ data.confidence|int }}%</span>
+                </div>
+                <p class="stat-desc">AI certainty of diagnosis</p>
+            </div>
+            <div class="result-card stat-card">
+                <span class="stat-label">Risk Score</span>
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="36"/>
+                        <circle class="ring-fill red-ring" cx="45" cy="45" r="36"
+                            stroke-dasharray="{{ (data.risk_score / 100) * 226.19 }} 226.19"/>
+                    </svg>
+                    <span class="ring-val">{{ data.risk_score|int }}</span>
+                </div>
+                <p class="stat-desc">Likelihood to worsen</p>
+            </div>
+            <div class="result-card stat-card">
+                <span class="stat-label">Recovery Chance</span>
+                <div class="ring-wrap">
+                    <svg class="ring-svg" viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="36"/>
+                        <circle class="ring-fill blue-ring" cx="45" cy="45" r="36"
+                            stroke-dasharray="{{ (data.recovery_chance / 100) * 226.19 }} 226.19"/>
+                    </svg>
+                    <span class="ring-val">{{ data.recovery_chance|int }}%</span>
+                </div>
+                <p class="stat-desc">With treatment applied</p>
+            </div>
+        </div>
+
+        <!-- ROW 2: Disease Frequency Distribution + Severity Analysis -->
+        <div class="charts-row-2">
+            <div class="result-card chart-card">
+                <h3 class="chart-title">Disease Frequency Distribution</h3>
+                <p class="chart-sub">Leaf area breakdown from this scan</p>
+                <div class="chart-wrap">
+                    <canvas id="freqChart"></canvas>
+                </div>
+            </div>
+            <div class="result-card chart-card">
+                <h3 class="chart-title">Disease Severity Analysis</h3>
+                <p class="chart-sub">Severity score components</p>
+                <div class="sev-bars">
+                    <div class="sev-row">
+                        <span class="sev-name">Affected Area</span>
+                        <div class="sev-track"><div class="sev-fill" style="width:{{ data.affected_area }}%;background:#f87171;"></div></div>
+                        <span class="sev-pct" style="color:#f87171">{{ data.affected_area|int }}%</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-name">Spread Risk</span>
+                        <div class="sev-track"><div class="sev-fill" style="width:{{ data.spread_risk }}%;background:#fb923c;"></div></div>
+                        <span class="sev-pct" style="color:#fb923c">{{ data.spread_risk|int }}%</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-name">Risk Score</span>
+                        <div class="sev-track"><div class="sev-fill" style="width:{{ data.risk_score }}%;background:#fbbf24;"></div></div>
+                        <span class="sev-pct" style="color:#fbbf24">{{ data.risk_score|int }}%</span>
+                    </div>
+                    <div class="sev-row">
+                        <span class="sev-name">Severity Score</span>
+                        <div class="sev-track"><div class="sev-fill" style="width:{{ data.severity_score }}%;background:#{{ 'f87171' if data.severity_level == 'High' else ('fb923c' if data.severity_level == 'Moderate' else 'fbbf24') }};"></div></div>
+                        <span class="sev-pct" style="color:#fbbf24">{{ data.severity_score|int }}%</span>
+                    </div>
+                </div>
+                <div class="sev-doughnut-wrap">
+                    <canvas id="sevChart"></canvas>
+                    <div class="sev-legend">
+                        <span class="leg-item"><span class="leg-dot" style="background:#f87171"></span>High Risk</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:#fb923c"></span>Moderate</span>
+                        <span class="leg-item"><span class="leg-dot" style="background:#4ade80"></span>Healthy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 3: Disease Prevalence Rate -->
+        <div class="result-card chart-card-full">
+            <h3 class="chart-title">Disease Prevalence Rate</h3>
+            <p class="chart-sub">Estimated tissue health distribution in this leaf</p>
+            <div class="prevalence-row">
+                <div class="prev-item">
+                    <div class="prev-circle" style="border-color:#f87171; color:#f87171">
+                        {{ data.affected_area|int }}%
+                    </div>
+                    <span class="prev-label">Diseased Tissue</span>
+                </div>
+                <div class="prev-arrow">→</div>
+                <div class="prev-item">
+                    <div class="prev-circle" style="border-color:#4ade80; color:#4ade80">
+                        {{ (100 - data.affected_area)|int }}%
+                    </div>
+                    <span class="prev-label">Healthy Tissue</span>
+                </div>
+                <div class="prev-arrow">→</div>
+                <div class="prev-item">
+                    <div class="prev-circle" style="border-color:#60a5fa; color:#60a5fa">
+                        {{ data.spread_risk|int }}%
+                    </div>
+                    <span class="prev-label">Spread Risk</span>
+                </div>
+                <div class="prev-arrow">→</div>
+                <div class="prev-item">
+                    <div class="prev-circle" style="border-color:#a78bfa; color:#a78bfa">
+                        {{ data.recovery_chance|int }}%
+                    </div>
+                    <span class="prev-label">Recovery Rate</span>
+                </div>
+            </div>
+            <div class="prev-bar-wrap">
+                <div class="prev-bar-diseased" style="width:{{ data.affected_area }}%"></div>
+                <div class="prev-bar-healthy" style="width:{{ (100 - data.affected_area) }}%"></div>
+            </div>
+            <div class="prev-bar-labels">
+                <span style="color:#f87171">● Diseased: {{ data.affected_area|int }}%</span>
+                <span style="color:#4ade80">● Healthy: {{ (100 - data.affected_area)|int }}%</span>
+            </div>
+        </div>
+
+        <!-- ROW 4: Accuracy + Precision/Recall/F1 -->
+        <div class="charts-row-2">
+            <div class="result-card chart-card">
+                <h3 class="chart-title">Accuracy Analysis</h3>
+                <p class="chart-sub">Model performance for detected disease class</p>
+                <div class="chart-wrap">
+                    <canvas id="accChart"></canvas>
+                </div>
+            </div>
+            <div class="result-card chart-card">
+                <h3 class="chart-title">Precision / Recall / F1</h3>
+                <p class="chart-sub">Diagnostic quality metrics for this class</p>
+                <div class="prf-big-row">
+                    <div class="prf-box">
+                        <div class="prf-val" style="color:#2ecc71">{{ data.precision }}%</div>
+                        <div class="prf-lbl">Precision</div>
+                        <div class="prf-desc">Of positive predictions, how many were correct</div>
+                    </div>
+                    <div class="prf-box">
+                        <div class="prf-val" style="color:#60a5fa">{{ data.recall }}%</div>
+                        <div class="prf-lbl">Recall</div>
+                        <div class="prf-desc">Of actual diseases present, how many were found</div>
+                    </div>
+                    <div class="prf-box">
+                        <div class="prf-val" style="color:#f59e0b">{{ data.f1 }}%</div>
+                        <div class="prf-lbl">F1 Score</div>
+                        <div class="prf-desc">Harmonic mean of precision and recall</div>
+                    </div>
+                </div>
+                <div class="chart-wrap" style="margin-top:16px">
+                    <canvas id="prfChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 5: Disease Trend + Correlation -->
+        <div class="charts-row-2">
+            <div class="result-card chart-card">
+                <h3 class="chart-title">Disease Trend Analysis</h3>
+                <p class="chart-sub">Projected severity trend if untreated vs treated</p>
+                <div class="chart-wrap">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="result-card chart-card">
+                <h3 class="chart-title">Correlation Analysis</h3>
+                <p class="chart-sub">Temperature & humidity optimal zone for this disease</p>
+                <div class="chart-wrap">
+                    <canvas id="corrChart"></canvas>
+                </div>
+            </div>
+        </div>
+        {% if scan_id %}
+        <!-- REPORT SECTION -->
+        <div class="result-card report-card" id="report-section">
+            <div class="report-header">
+                <span>📄</span>
+                <span class="report-title">AI Diagnostic Report</span>
+            </div>
+            <p class="report-sub">Generate a detailed professional report for this scan — download as PDF or copy as text.</p>
+            <button class="report-gen-btn" id="report-gen-btn" onclick="generateReport()">
+                ✦ Generate Report
+            </button>
+
+            <div id="report-loading" style="display:none; text-align:center; padding:20px;">
+                <div class="spinner-ring" style="margin:0 auto 12px;"></div>
+                <p style="color:rgba(255,255,255,0.5); font-size:14px;">Writing your report...</p>
+            </div>
+
+            <div id="report-output" style="display:none;">
+                <div class="report-actions">
+                    <button class="report-action-btn" onclick="downloadPDF()">⬇ Download PDF</button>
+                    <button class="report-action-btn" onclick="copyText()">⎘ Copy Text</button>
+                </div>
+                <div class="report-body" id="report-body"></div>
+            </div>
+        </div>
+        <div class="result-card feedback-card" id="feedback-box">
+            <div class="feedback-header">
+                <span>🎯</span>
+                <span class="feedback-title">Was this diagnosis correct?</span>
+            </div>
+            <p class="feedback-sub">Your feedback helps improve real Precision / Recall / F1 metrics</p>
+            <div class="feedback-btns" id="feedback-btns">
+                <button class="fb-btn fb-yes" onclick="sendFeedback('correct')">✓ Yes, Correct</button>
+                <button class="fb-btn fb-no"  onclick="sendFeedback('incorrect')">✗ No, Incorrect</button>
+            </div>
+
+            <div class="correction-form" id="correction-form" style="display:none;">
+                <p class="correction-prompt">What is the correct plant name?</p>
+                <div class="correction-input-row">
+                    <input
+                        type="text"
+                        id="correct-plant-input"
+                        class="correction-input"
+                        placeholder="e.g. Mango, Tomato, Rice..."
+                        autocomplete="off"
+                    >
+                    <button class="correction-submit-btn" onclick="submitCorrection()">Submit →</button>
+                </div>
+                <p class="correction-skip" onclick="skipCorrection()">Skip — just mark as incorrect</p>
+            </div>
+
+            <p class="feedback-thanks" id="feedback-thanks" style="display:none;">Thanks! Feedback recorded ✓</p>
+            <p class="feedback-thanks" id="correction-thanks" style="display:none; color:#60a5fa;">
+                🧠 Correction saved! This will improve future identifications.
+            </p>
+        </div>
+
+        <script>
+        const SCAN_ID  = {{ scan_id }};
+        const IMG_HASH = "{{ image_hash }}";
+
+        function stripMarkdown(text) {
+            return text
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/^[-•]\s*/gm, '')
+                .replace(/^#+\s*/gm, '');
+        }
+
+        document.querySelectorAll(
+            '.cause-text, .identity-summary, .advisory-item span, .identity-value'
+        ).forEach(el => {
+            el.textContent = stripMarkdown(el.textContent);
+        });
+
+        function sendFeedback(response) {
+            fetch('/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scan_id: SCAN_ID, feedback: response })
+            });
+
+            if (response === 'incorrect') {
+                document.getElementById('feedback-btns').style.display = 'none';
+                document.getElementById('correction-form').style.display = 'block';
+            } else {
+                document.getElementById('feedback-btns').style.display = 'none';
+                document.getElementById('feedback-thanks').style.display = 'block';
+            }
+        }
+
+        function submitCorrection() {
+            const plantName = document.getElementById('correct-plant-input').value.trim();
+            if (!plantName) {
+                document.getElementById('correct-plant-input').style.borderColor = '#f87171';
+                return;
+            }
+            fetch('/correct_plant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scan_id: SCAN_ID,
+                    correct_plant: plantName,
+                    image_hash: IMG_HASH
+                })
+            })
+            .then(r => r.json())
+            .then(() => {
+                document.getElementById('correction-form').style.display = 'none';
+                document.getElementById('correction-thanks').style.display = 'block';
+            });
+        }
+
+        function skipCorrection() {
+            document.getElementById('correction-form').style.display = 'none';
+            document.getElementById('feedback-thanks').style.display = 'block';
+        }
+        </script>
+        {% endif %}
+
+    </section>
+    {% endif %}
+
+</main>
+
+<footer class="footer">
+    AgroStat AI · Powered by Pixtral-12B Vision · For agricultural advisory use only
+</footer>
+
+<script>
+    // ── Upload UX ──
+    const dropZone    = document.getElementById('drop-zone');
+    const fileInput   = document.getElementById('file-input');
+    const filePreview = document.getElementById('file-preview');
+    const previewImg  = document.getElementById('preview-img');
+    const fileNameEl  = document.getElementById('file-name');
+    const clearBtn    = document.getElementById('clear-btn');
+    const form        = document.getElementById('upload-form');
+    const loadingScr  = document.getElementById('loading-screen');
+    const analyzeBtn  = document.getElementById('analyze-btn');
+
+    dropZone.addEventListener('click', (e) => {
+        if (e.target !== fileInput) {
+            fileInput.click();
+        }
+    });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault(); dropZone.classList.remove('drag-active');
+        if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; showPreview(e.dataTransfer.files[0]); }
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) showPreview(fileInput.files[0]); });
+    function showPreview(file) {
+        const r = new FileReader();
+        r.onload = e => { previewImg.src = e.target.result; fileNameEl.textContent = file.name; dropZone.style.display = 'none'; filePreview.style.display = 'flex'; };
+        r.readAsDataURL(file);
+    }
+    clearBtn.addEventListener('click', () => { fileInput.value = ''; filePreview.style.display = 'none'; dropZone.style.display = 'flex'; });
+    form.addEventListener('submit', () => { loadingScr.style.display = 'flex'; analyzeBtn.disabled = true; });
+
+    {% if data %}
+    // ── Chart.js defaults ──
+    const GRID = 'rgba(255,255,255,0.07)';
+    const TEXT = 'rgba(255,255,255,0.50)';
+    const baseOpts = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: 'rgba(6,26,14,0.95)', titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.75)', borderColor: 'rgba(46,204,113,0.3)', borderWidth: 1 }
+        },
+        scales: {
+            x: { grid: { color: GRID }, ticks: { color: TEXT, font: { size: 11 } } },
+            y: { grid: { color: GRID }, ticks: { color: TEXT, font: { size: 11 } } }
+        }
+    };
+
+    // 1. Frequency Distribution — doughnut of diseased vs healthy tissue
+    new Chart(document.getElementById('freqChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Diseased Tissue', 'Healthy Tissue'],
+            datasets: [{
+                data: [{{ data.affected_area }}, {{ 100 - data.affected_area }}],
+                backgroundColor: ['rgba(248,113,113,0.85)', 'rgba(74,222,128,0.85)'],
+                borderColor: ['#f87171', '#4ade80'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { color: TEXT, font: { size: 11 }, boxWidth: 12, padding: 14 } },
+                tooltip: { backgroundColor: 'rgba(6,26,14,0.95)', titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.75)' }
+            }
+        }
+    });
+
+    // 2. Severity doughnut
+    new Chart(document.getElementById('sevChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['High Risk', 'Moderate', 'Healthy Zone'],
+            datasets: [{
+                data: [
+                    Math.round({{ data.risk_score }} * 0.4),
+                    Math.round({{ data.risk_score }} * 0.6),
+                    Math.round(100 - {{ data.risk_score }})
+                ],
+                backgroundColor: ['rgba(248,113,113,0.8)', 'rgba(251,146,60,0.8)', 'rgba(74,222,128,0.8)'],
+                borderColor: ['#f87171', '#fb923c', '#4ade80'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '60%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { backgroundColor: 'rgba(6,26,14,0.95)', titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.75)' }
+            }
+        }
+    });
+
+    // 3. Accuracy radar — 5 diagnostic dimensions
+    new Chart(document.getElementById('accChart'), {
+        type: 'radar',
+        data: {
+            labels: ['Confidence', 'Precision', 'Recall', 'F1 Score', 'Recovery'],
+            datasets: [{
+                label: 'Score',
+                data: [{{ data.confidence }}, {{ data.precision }}, {{ data.recall }}, {{ data.f1 }}, {{ data.recovery_chance }}],
+                backgroundColor: 'rgba(46,204,113,0.15)',
+                borderColor: '#2ecc71',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#2ecc71',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(6,26,14,0.95)', titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.75)' } },
+            scales: {
+                r: {
+                    grid: { color: GRID },
+                    ticks: { color: TEXT, font: { size: 10 }, backdropColor: 'transparent', stepSize: 20 },
+                    pointLabels: { color: 'rgba(255,255,255,0.65)', font: { size: 11 } },
+                    min: 0, max: 100
+                }
+            }
+        }
+    });
+
+    // 4. PRF bar chart
+    new Chart(document.getElementById('prfChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Precision', 'Recall', 'F1 Score'],
+            datasets: [{
+                data: [{{ data.precision }}, {{ data.recall }}, {{ data.f1 }}],
+                backgroundColor: ['rgba(46,204,113,0.75)', 'rgba(96,165,250,0.75)', 'rgba(245,158,11,0.75)'],
+                borderColor: ['#2ecc71', '#60a5fa', '#f59e0b'],
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: { ...baseOpts, scales: { x: { grid: { color: GRID }, ticks: { color: TEXT } }, y: { grid: { color: GRID }, ticks: { color: TEXT }, min: 0, max: 100 } } }
+    });
+
+    // 5. Trend Chart — projected untreated vs treated over 8 weeks
+    const baseVal  = {{ data.severity_score }};
+    const riskMult = {{ data.spread_risk }} / 100;
+    const recov    = {{ data.recovery_chance }} / 100;
+    const weeks    = ['Now', 'Wk 1', 'Wk 2', 'Wk 3', 'Wk 4', 'Wk 5', 'Wk 6', 'Wk 7'];
+    const untreated = weeks.map((_, i) => Math.min(100, Math.round(baseVal + i * riskMult * 8)));
+    const treated   = weeks.map((_, i) => Math.max(0,  Math.round(baseVal - i * recov * 7)));
+
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: weeks,
+            datasets: [
+                { label: 'Untreated', data: untreated, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.10)', borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#f87171' },
+                { label: 'With Treatment', data: treated, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.10)', borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#2ecc71' }
+            ]
+        },
+        options: {
+            ...baseOpts,
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { color: TEXT, font: { size: 11 }, boxWidth: 12, padding: 14 } },
+                tooltip: { backgroundColor: 'rgba(6,26,14,0.95)', titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.75)' }
+            },
+            scales: { x: { grid: { color: GRID }, ticks: { color: TEXT } }, y: { grid: { color: GRID }, ticks: { color: TEXT }, min: 0, max: 100, title: { display: true, text: 'Severity Score', color: TEXT } } }
+        }
+    });
+
+    // 6. Correlation — temp & humidity zones
+    const tempMin  = {{ data.temp_min }};
+    const tempMax  = {{ data.temp_max }};
+    const humMin   = {{ data.hum_min }};
+    const humMax   = {{ data.hum_max }};
+    const tempLabels = Array.from({length: 11}, (_, i) => (tempMin - 5 + i * 2) + '°C');
+    const humLabels  = Array.from({length: 11}, (_, i) => (humMin - 10 + i * 5) + '%');
+    const tempSev = tempLabels.map((_, i) => {
+        const t = tempMin - 5 + i * 2;
+        if (t >= tempMin && t <= tempMax) return Math.round(50 + ((t - tempMin) / (tempMax - tempMin)) * 40);
+        return Math.max(5, Math.round(20 - Math.abs(t - (tempMin + tempMax) / 2) * 2));
+    });
+    const humSev = humLabels.map((_, i) => {
+        const h = humMin - 10 + i * 5;
+        if (h >= humMin && h <= humMax) return Math.round(50 + ((h - humMin) / (humMax - humMin)) * 40);
+        return Math.max(5, Math.round(20 - Math.abs(h - (humMin + humMax) / 2) * 0.5));
+    });
+
+    new Chart(document.getElementById('corrChart'), {
+        type: 'line',
+        data: {
+            labels: tempLabels,
+            datasets: [
+                { label: 'Temp vs Severity', data: tempSev, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.10)', borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#f87171' },
+                { label: 'Humidity vs Severity', data: humSev, borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.10)', borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#60a5fa' }
+            ]
+        },
+        options: {
+            ...baseOpts,
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { color: TEXT, font: { size: 11 }, boxWidth: 12, padding: 14 } },
+                tooltip: { backgroundColor: 'rgba(6,26,14,0.95)', titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.75)' }
+            },
+            scales: { x: { grid: { color: GRID }, ticks: { color: TEXT, font: { size: 10 }, maxRotation: 30 } }, y: { grid: { color: GRID }, ticks: { color: TEXT }, min: 0, max: 100, title: { display: true, text: 'Disease Severity', color: TEXT } } }
+        }
+    });
+
+    const reportData = {
+        plant_name:      "{{ data.plant_name }}",
+        disease:         "{{ data.disease }}",
+        severity_level:  "{{ data.severity_level }}",
+        confidence:      {{ data.confidence }},
+        affected_area:   {{ data.affected_area }},
+        recovery_chance: {{ data.recovery_chance }},
+        risk_score:      {{ data.risk_score }},
+        summary:         "{{ data.summary }}",
+        cause:           "{{ data.cause }}",
+        remedies:        {{ data.remedies | tojson }},
+        precautions:     {{ data.precautions | tojson }},
+        temp_min:        {{ data.temp_min }},
+        temp_max:        {{ data.temp_max }},
+        hum_min:         {{ data.hum_min }},
+        hum_max:         {{ data.hum_max }}
+    };
+
+    function generateReport() {
+        document.getElementById('report-gen-btn').style.display = 'none';
+        document.getElementById('report-loading').style.display = 'block';
+
+        fetch('/generate_report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: reportData })
+        })
+        .then(r => r.json())
+        .then(res => {
+            document.getElementById('report-loading').style.display = 'none';
+            if (res.report) {
+                document.getElementById('report-body').innerText = res.report;
+                document.getElementById('report-output').style.display = 'block';
+            } else {
+                document.getElementById('report-gen-btn').style.display = 'inline-flex';
+                alert('Failed to generate report: ' + (res.error || 'Unknown error'));
+            }
+        })
+        .catch(() => {
+            document.getElementById('report-loading').style.display = 'none';
+            document.getElementById('report-gen-btn').style.display = 'inline-flex';
+            alert('Network error. Please try again.');
+        });
+    }
+
+    function downloadPDF() {
+        const raw = document.getElementById('report-body').innerText;
+        const text = raw
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/^---+$/gm, '─────────────────────────')
+        .replace(/^#{1,3}\s+/gm, '');
+        const plant = reportData.plant_name;
+        const disease = reportData.disease;
+
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html><head><title>AgroStat AI Report</title>
+            <style>
+                body { font-family: Georgia, serif; max-width: 800px; margin: 40px auto; color: #1a1a1a; line-height: 1.7; }
+                h1 { font-size: 22px; border-bottom: 2px solid #2ecc71; padding-bottom: 8px; }
+                h2 { font-size: 15px; color: #555; margin-top: 0; }
+                pre { white-space: pre-wrap; font-family: Georgia, serif; font-size: 14px; }
+                .footer { margin-top: 40px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 12px; }
+            </style></head>
+            <body>
+                <h1>AgroStat AI — Diagnostic Report</h1>
+                <h2>${plant} · ${disease} · ${new Date().toLocaleDateString()}</h2>
+                <pre>${text}</pre>
+                <div class="footer">AgroStat AI · Powered by Pixtral-12B Vision · For agricultural advisory use only</div>
+            </body></html>
+        `);
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+
+    function copyText() {
+        const text = document.getElementById('report-body').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('[onclick="copyText()"]');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '⎘ Copy Text', 2000);
+        });
+    }
+    {% endif %}
+</script>
+
+</body>
+</html>
