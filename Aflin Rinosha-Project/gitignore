@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────
+# LPR Dashboard — .gitignore
+# ─────────────────────────────────────────────────────────────
+
+# Environment & secrets — NEVER push your API key
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Database — contains real plate data, keep it local
+*.db
+*.sqlite
+*.sqlite3
+
+# Model weights — large binary files, host separately (Google Drive / HuggingFace)
+*.pt
+*.pth
+*.onnx
+*.weights
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & temp
+*.log
+*.tmp
+tmp/
+temp/
+
+# Test images/videos (usually large)
+test_images/
+test_videos/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.jpg
+*.jpeg
+*.png
+*.bmp
+# (remove the image/video lines above if you want sample media in the repo)
+
+# Backup files generated during development
+*_backup.py

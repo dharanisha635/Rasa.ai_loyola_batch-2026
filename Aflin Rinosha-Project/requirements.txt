@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────
+# LPR Dashboard v14 — Requirements
+# Install: pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────
+
+# ── Web framework ─────────────────────────────────────────────
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# ── Computer vision ───────────────────────────────────────────
+# Use opencv-python if you need GUI windows (imshow),
+# opencv-python-headless if running on a server with no display.
+opencv-python>=4.8.0
+
+# ── OCR ───────────────────────────────────────────────────────
+easyocr>=1.7.1
+
+# ── YOLO (plate model, COCO model, helmet model) ─────────────
+ultralytics>=8.2.0
+
+# ── Deep learning backend (required by EasyOCR + Ultralytics) ─
+# CPU-only build — remove "+cpu" suffix if you have a CUDA GPU
+# and replace with the matching CUDA version, e.g. torch==2.3.0+cu121
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ── Gemini API ────────────────────────────────────────────────
+google-genai>=0.8.0
+
+# ── Numerical computing ───────────────────────────────────────
+numpy>=1.24.0
+
+# ── Environment variables (.env file) ────────────────────────
+python-dotenv>=1.0.0
+
+# ── Image processing (used internally by EasyOCR / Ultralytics) ──
+Pillow>=10.0.0
+
+# ── Standard library (no install needed — listed for reference) ──
+# sqlite3, re, os, threading, uuid, json, base64,
+# time, traceback, datetime, pathlib, difflib  →  all built-in

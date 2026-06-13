@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LPR — Vehicle Crossing Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --beige:        #F5EFE0;
+    --beige-dark:   #EDE3CC;
+    --beige-mid:    #D9CBAA;
+    --pista:        #B5C9A0;
+    --pista-light:  #D3E5C3;
+    --pista-dark:   #7FA86A;
+    --orange:       #C96B2A;
+    --orange-light: #E8884A;
+    --orange-pale:  #F2D0B0;
+    --brown:        #7A4A28;
+    --brown-light:  #A0714E;
+    --cream:        #FBF7EE;
+    --red:          #C0392B;
+    --red-light:    #F5B7B1;
+    --red-pale:     #FDECEA;
+    --text-dark:    #3A2B1A;
+    --text-mid:     #6B5540;
+    --text-light:   #9C8060;
+    --shadow:       rgba(122,74,40,0.12);
+    --shadow-strong:rgba(122,74,40,0.22);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+  body {
+    font-family:'DM Sans',sans-serif;
+    background:var(--beige);
+    color:var(--text-dark);
+    min-height:100vh;
+    background-image:
+      radial-gradient(ellipse at 0% 0%,rgba(181,201,160,0.25) 0%,transparent 60%),
+      radial-gradient(ellipse at 100% 100%,rgba(201,107,42,0.12) 0%,transparent 55%);
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background:var(--brown);
+    padding:16px 36px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;top:0;z-index:100;
+    box-shadow:0 2px 18px var(--shadow-strong);
+  }
+  .topbar-title {
+    font-family:'Playfair Display',serif;
+    font-size:1.5rem;font-weight:700;
+    color:var(--beige);letter-spacing:0.04em;
+  }
+  .topbar-title span{color:var(--orange-light);}
+  .topbar-subtitle {
+    font-size:0.72rem;color:var(--beige-mid);
+    letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;
+  }
+  .topbar-right{display:flex;gap:12px;align-items:center;}
+  .live-stat {
+    background:var(--orange);border-radius:32px;
+    padding:8px 18px;display:flex;align-items:center;gap:10px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.18);
+  }
+  .live-stat.red-stat{background:var(--red);}
+  .live-stat .count {
+    font-family:'DM Mono',monospace;font-size:1.4rem;
+    font-weight:500;color:#fff;line-height:1;
+  }
+  .live-stat .label {
+    font-size:0.68rem;color:rgba(255,255,255,0.85);
+    text-transform:uppercase;letter-spacing:0.1em;line-height:1.3;
+  }
+  .dot-live {
+    width:8px;height:8px;background:#aeff8a;
+    border-radius:50%;animation:pulse 1.6s infinite;
+  }
+  .dot-red{background:#ff8a8a;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.4);}}
+
+  /* LAYOUT */
+  .main{max-width:1100px;margin:0 auto;padding:32px 24px 60px;}
+
+  /* TABS */
+  .tab-row {
+    display:flex;gap:0;margin-bottom:32px;
+    border-bottom:2px solid var(--beige-mid);
+  }
+  .tab-btn {
+    font-family:'DM Sans',sans-serif;font-size:0.85rem;
+    font-weight:500;letter-spacing:0.07em;text-transform:uppercase;
+    background:transparent;border:none;cursor:pointer;
+    padding:13px 28px;color:var(--text-light);
+    border-bottom:3px solid transparent;margin-bottom:-2px;
+    transition:all 0.2s;
+  }
+  .tab-btn:hover{color:var(--orange);}
+  .tab-btn.active{
+    color:var(--orange);border-bottom-color:var(--orange);
+    background:linear-gradient(to bottom,transparent,rgba(201,107,42,0.05));
+  }
+  .tab-btn.viol-tab.active{
+    color:var(--red);border-bottom-color:var(--red);
+    background:linear-gradient(to bottom,transparent,rgba(192,57,43,0.05));
+  }
+
+  /* PANELS */
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* SCAN CARDS */
+  .scan-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  @media(max-width:720px){.scan-grid{grid-template-columns:1fr;}}
+
+  .card {
+    background:var(--cream);border-radius:20px;padding:28px 24px;
+    box-shadow:0 4px 24px var(--shadow);
+    border:1.5px solid var(--beige-dark);
+    position:relative;overflow:hidden;
+  }
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+  .card.image-card::before{background:linear-gradient(90deg,var(--pista-dark),var(--pista-light));}
+  .card.video-card::before{background:linear-gradient(90deg,var(--orange),var(--orange-light));}
+
+  .card-icon {
+    width:44px;height:44px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem;margin-bottom:14px;
+  }
+  .image-card .card-icon{background:var(--pista-light);}
+  .video-card .card-icon{background:var(--orange-pale);}
+
+  .card-title {
+    font-family:'Playfair Display',serif;font-size:1.15rem;
+    font-weight:600;color:var(--text-dark);margin-bottom:5px;
+  }
+  .card-desc{font-size:0.8rem;color:var(--text-light);margin-bottom:20px;line-height:1.6;}
+
+  /* FIELDS */
+  .field{margin-bottom:14px;}
+  .field label {
+    display:block;font-size:0.72rem;font-weight:500;
+    text-transform:uppercase;letter-spacing:0.1em;
+    color:var(--text-mid);margin-bottom:6px;
+  }
+  .field input {
+    width:100%;padding:10px 14px;
+    border:1.5px solid var(--beige-mid);border-radius:11px;
+    font-family:'DM Mono',monospace;font-size:0.83rem;
+    background:var(--beige);color:var(--text-dark);
+    transition:border-color 0.2s,box-shadow 0.2s;outline:none;
+  }
+  .field input:focus{
+    border-color:var(--orange);
+    box-shadow:0 0 0 3px rgba(201,107,42,0.12);
+  }
+
+  /* BUTTONS */
+  .btn {
+    width:100%;padding:12px 20px;border:none;border-radius:12px;
+    font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;
+    cursor:pointer;transition:all 0.2s;
+    display:flex;align-items:center;justify-content:center;
+    gap:8px;letter-spacing:0.03em;
+  }
+  .btn-pista{background:var(--pista-dark);color:#fff;}
+  .btn-pista:hover{background:#6a9458;transform:translateY(-1px);box-shadow:0 6px 18px rgba(127,168,106,0.35);}
+  .btn-orange{background:var(--orange);color:#fff;}
+  .btn-orange:hover{background:#b55e24;transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,107,42,0.35);}
+  .btn:disabled{opacity:0.55;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  /* STATUS */
+  .status-block {
+    margin-top:14px;padding:12px 14px;border-radius:11px;
+    font-size:0.8rem;font-family:'DM Mono',monospace;
+    display:none;align-items:center;gap:10px;line-height:1.5;
+  }
+  .status-block.show{display:flex;}
+  .status-block.info{background:var(--pista-light);color:var(--pista-dark);border:1px solid var(--pista);}
+  .status-block.success{background:#eef7e8;color:#3d7a28;border:1px solid #b0d89a;}
+  .status-block.error{background:#fce9e6;color:#b33020;border:1px solid #f0b0a0;}
+  .status-block.waiting{background:var(--orange-pale);color:var(--brown);border:1px solid #e8b880;}
+  .spinner{width:15px;height:15px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* RESULT CHIPS */
+  .result-list{margin-top:16px;display:flex;flex-direction:column;gap:9px;}
+  .result-chip {
+    background:var(--beige);border:1.5px solid var(--beige-dark);
+    border-radius:11px;padding:11px 14px;
+    display:flex;align-items:center;gap:12px;
+    animation:slideIn 0.3s ease;
+  }
+  .result-chip.has-violation{border-color:var(--red-light);background:var(--red-pale);}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .vtype-badge {
+    font-size:1rem;width:32px;height:32px;background:var(--beige-dark);
+    border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .plate-text{font-family:'DM Mono',monospace;font-size:0.92rem;font-weight:500;color:var(--text-dark);letter-spacing:0.06em;}
+  .plate-meta{font-size:0.72rem;color:var(--text-light);margin-top:2px;}
+  .time-tag{margin-left:auto;font-family:'DM Mono',monospace;font-size:0.76rem;background:var(--brown);color:var(--beige);padding:3px 9px;border-radius:18px;flex-shrink:0;}
+  .violation-badge{font-size:0.68rem;background:var(--red);color:#fff;padding:2px 8px;border-radius:10px;font-weight:500;letter-spacing:0.05em;}
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size:0.7rem;text-transform:uppercase;letter-spacing:0.14em;
+    color:var(--text-light);font-weight:500;margin-bottom:18px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .section-label::after{content:'';flex:1;height:1px;background:var(--beige-mid);}
+
+  /* STATS ROW */
+  .stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px;}
+  @media(max-width:800px){.stats-row{grid-template-columns:repeat(3,1fr);}}
+  .stat-pill {
+    background:var(--cream);border:1.5px solid var(--beige-dark);
+    border-radius:14px;padding:12px 10px;text-align:center;
+    box-shadow:0 2px 10px var(--shadow);
+  }
+  .stat-pill .n{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;line-height:1;color:var(--brown);}
+  .stat-pill .lbl{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-light);margin-top:3px;}
+  .stat-pill.hl-orange .n{color:var(--orange);}
+  .stat-pill.hl-pista  .n{color:var(--pista-dark);}
+  .stat-pill.hl-red    .n{color:var(--red);}
+
+  /* LOG CONTROLS */
+  .log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .log-title{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--text-dark);}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .filter-btn {
+    padding:6px 16px;border-radius:18px;border:1.5px solid var(--beige-mid);
+    background:var(--cream);font-family:'DM Sans',sans-serif;font-size:0.78rem;
+    cursor:pointer;color:var(--text-mid);transition:all 0.2s;font-weight:500;
+  }
+  .filter-btn:hover,.filter-btn.active{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .filter-btn.active.pista{background:var(--pista-dark);border-color:var(--pista-dark);}
+  .filter-btn.active.red-f{background:var(--red);border-color:var(--red);}
+
+  .search-row{display:flex;gap:10px;margin-bottom:18px;align-items:center;}
+  .search-input {
+    flex:1;padding:9px 16px;border:1.5px solid var(--beige-mid);
+    border-radius:11px;font-family:'DM Mono',monospace;font-size:0.83rem;
+    background:var(--cream);color:var(--text-dark);outline:none;transition:border-color 0.2s;
+  }
+  .search-input:focus{border-color:var(--orange);}
+  .refresh-btn{padding:9px 18px;border-radius:11px;border:1.5px solid var(--beige-mid);background:var(--cream);cursor:pointer;font-size:0.95rem;transition:all 0.2s;color:var(--text-mid);}
+  .refresh-btn:hover{background:var(--beige-dark);color:var(--orange);}
+
+  /* TABLE */
+  .table-wrap{background:var(--cream);border-radius:16px;border:1.5px solid var(--beige-dark);overflow:hidden;box-shadow:0 4px 24px var(--shadow);}
+  table{width:100%;border-collapse:collapse;}
+  thead{background:var(--beige-dark);}
+  thead th{padding:12px 16px;font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mid);text-align:left;}
+  tbody tr{border-bottom:1px solid var(--beige-dark);transition:background 0.15s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--beige);}
+  tbody td{padding:12px 16px;font-size:0.83rem;color:var(--text-dark);vertical-align:middle;}
+  .plate-cell{font-family:'DM Mono',monospace;font-weight:500;letter-spacing:0.08em;color:var(--brown);cursor:pointer;}
+  .plate-cell:hover{color:var(--orange);text-decoration:underline;}
+
+  /* BADGES */
+  .vbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:18px;font-size:0.73rem;font-weight:500;text-transform:capitalize;}
+  .vbadge.car   {background:var(--orange-pale);color:var(--brown);}
+  .vbadge.bike  {background:var(--pista-light);color:var(--pista-dark);}
+  .vbadge.truck {background:#dce6f5;color:#3a5a8a;}
+  .vbadge.unknown{background:var(--beige-dark);color:var(--text-light);}
+
+  .viol-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:18px;font-size:0.73rem;font-weight:500;}
+  .viol-badge.no_helmet{background:var(--red-pale);color:var(--red);border:1px solid var(--red-light);}
+  .viol-badge.signal_jump{background:#fff4d6;color:#a06200;border:1px solid #f5c842;}
+
+  /* SIGNAL CONFIG CARD */
+  .signal-config-card {
+    margin-top: 24px;
+    background: var(--cream);
+    border-radius: 20px;
+    border: 1.5px solid #f5c842;
+    box-shadow: 0 4px 24px rgba(160,98,0,0.10);
+    overflow: hidden;
+  }
+  .signal-config-header {
+    background: #7a5200;
+    padding: 14px 22px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; user-select: none;
+  }
+  .signal-config-header-icon {
+    width: 34px; height: 34px;
+    background: #f5c842; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .signal-config-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600; color: #fff3cc; flex: 1;
+  }
+  .signal-config-sub {
+    font-size: 0.68rem; color: #e8c96a;
+    text-transform: uppercase; letter-spacing: 0.09em; margin-top: 1px;
+  }
+  .signal-config-toggle {
+    font-size: 1rem; color: #f5c842; transition: transform 0.25s;
+  }
+  .signal-config-toggle.open { transform: rotate(180deg); }
+  .signal-config-body {
+    display: none; padding: 20px 22px 22px;
+  }
+  .signal-config-body.open { display: block; }
+  .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:600px){ .signal-grid { grid-template-columns: 1fr; } }
+  .signal-status-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 11px;
+    background: var(--beige); border: 1.5px solid var(--beige-mid);
+    margin-bottom: 16px; font-size: 0.82rem; color: var(--text-mid);
+  }
+  .light-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    flex-shrink: 0; border: 2px solid rgba(0,0,0,0.12);
+    transition: background 0.4s;
+  }
+  .light-dot.red    { background: #e84040; box-shadow: 0 0 8px #e84040cc; }
+  .light-dot.green  { background: #3dbc5c; box-shadow: 0 0 8px #3dbc5ccc; }
+  .light-dot.unknown{ background: #bbb; }
+  .signal-enabled-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .toggle-switch {
+    position: relative; width: 44px; height: 24px; flex-shrink: 0;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: #ccc;
+    border-radius: 24px; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #f5c842; }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+  .toggle-label { font-size: 0.82rem; color: var(--text-mid); font-weight: 500; }
+  .btn-amber {
+    background: #c97f00; color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+    border: none; border-radius: 11px; padding: 10px 20px;
+    cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 6px;
+  }
+  .btn-amber:hover { background: #a06200; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(160,98,0,0.3); }
+  .signal-save-status {
+    margin-top: 10px; font-size: 0.78rem; font-family: 'DM Mono', monospace;
+    color: var(--pista-dark); display: none;
+  }
+
+  /* EMPTY */
+  .empty-state{text-align:center;padding:50px 20px;color:var(--text-light);}
+  .empty-state .ei{font-size:2.4rem;margin-bottom:12px;}
+  .empty-state p{font-size:0.88rem;line-height:1.7;}
+  .no-data{text-align:center;padding:28px;color:var(--text-light);font-size:0.83rem;}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(58,43,26,0.55);z-index:200;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--cream);border-radius:20px;padding:32px 28px;width:100%;max-width:480px;box-shadow:0 16px 60px rgba(0,0,0,0.25);animation:modalIn 0.25s ease;position:relative;max-height:80vh;overflow-y:auto;}
+  @keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .modal-close{position:absolute;top:14px;right:16px;background:var(--beige-dark);border:none;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:1rem;color:var(--text-mid);display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+  .modal-close:hover{background:var(--beige-mid);}
+  .modal-plate{font-family:'DM Mono',monospace;font-size:1.7rem;font-weight:500;color:var(--brown);letter-spacing:0.1em;margin-bottom:4px;}
+  .modal-sub{font-size:0.8rem;color:var(--text-light);margin-bottom:20px;}
+
+  .crossing-timeline{display:flex;flex-direction:column;gap:10px;}
+  .timeline-item{display:flex;align-items:flex-start;gap:12px;}
+  .timeline-dot{width:9px;height:9px;border-radius:50%;background:var(--orange);margin-top:5px;flex-shrink:0;position:relative;}
+  .timeline-dot::after{content:'';position:absolute;top:9px;left:3px;width:2px;height:36px;background:var(--beige-mid);}
+  .timeline-item:last-child .timeline-dot::after{display:none;}
+  .timeline-info .time{font-family:'DM Mono',monospace;font-size:0.88rem;color:var(--orange);font-weight:500;}
+  .timeline-info .when{font-size:0.76rem;color:var(--text-light);margin-top:1px;}
+  .timeline-info .src{font-size:0.73rem;color:var(--text-light);font-style:italic;margin-top:1px;}
+
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:var(--beige);}
+  ::-webkit-scrollbar-thumb{background:var(--beige-mid);border-radius:10px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--brown-light);}
+
+  /* ── RAG CHATBOT ── */
+  .chat-wrap {
+    margin-top: 32px;
+    background: var(--cream);
+    border-radius: 20px;
+    border: 1.5px solid var(--beige-dark);
+    box-shadow: 0 4px 24px var(--shadow);
+    overflow: hidden;
+  }
+  .chat-header {
+    background: var(--brown);
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chat-header-icon {
+    width: 36px; height: 36px;
+    background: var(--orange);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .chat-header-text { flex: 1; }
+  .chat-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600; color: var(--beige);
+  }
+  .chat-header-sub {
+    font-size: 0.68rem; color: var(--beige-mid);
+    text-transform: uppercase; letter-spacing: 0.09em; margin-top: 1px;
+  }
+  .chat-pills {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--beige-dark);
+  }
+  .chat-pill {
+    background: var(--beige); border: 1.5px solid var(--beige-mid);
+    color: var(--text-mid); font-size: 0.74rem; font-family: 'DM Sans', sans-serif;
+    padding: 5px 13px; border-radius: 18px; cursor: pointer;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .chat-pill:hover { background: var(--orange-pale); border-color: var(--orange); color: var(--brown); }
+  .chat-messages {
+    min-height: 180px; max-height: 310px;
+    overflow-y: auto; padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .chat-bubble {
+    max-width: 82%; padding: 11px 15px;
+    border-radius: 14px; font-size: 0.84rem;
+    line-height: 1.6; animation: slideIn 0.22s ease;
+  }
+  .chat-bubble.user {
+    align-self: flex-end;
+    background: var(--brown); color: var(--beige);
+    border-bottom-right-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .chat-bubble.bot {
+    align-self: flex-start;
+    background: var(--beige-dark); color: var(--text-dark);
+    border-bottom-left-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .chat-bubble.bot.typing {
+    background: var(--beige-dark); color: var(--text-light);
+    font-style: italic;
+  }
+  .chat-bubble.bot .bubble-meta {
+    font-size: 0.66rem; color: var(--text-light);
+    margin-top: 5px; font-family: 'DM Mono', monospace;
+  }
+  .chat-input-row {
+    display: flex; gap: 10px; padding: 14px 20px;
+    border-top: 1.5px solid var(--beige-dark);
+    background: var(--beige);
+  }
+  .chat-input {
+    flex: 1; padding: 10px 15px;
+    border: 1.5px solid var(--beige-mid); border-radius: 11px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    background: var(--cream); color: var(--text-dark);
+    outline: none; transition: border-color 0.2s;
+  }
+  .chat-input:focus { border-color: var(--orange); }
+  .chat-send-btn {
+    padding: 10px 18px; border-radius: 11px; border: none;
+    background: var(--orange); color: #fff; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    font-weight: 500; transition: all 0.18s; flex-shrink: 0;
+  }
+  .chat-send-btn:hover { background: #b55e24; }
+  .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div>
+    <div class="topbar-title">LPR <span>Crossing</span> Log</div>
+    <div class="topbar-subtitle">License Plate Recognition · Traffic Monitor</div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-stat red-stat">
+      <div class="dot-live dot-red"></div>
+      <div>
+        <div class="count" id="topbar-violations">—</div>
+        <div class="label">Violations<br>Today</div>
+      </div>
+    </div>
+    <div class="live-stat">
+      <div class="dot-live"></div>
+      <div>
+        <div class="count" id="topbar-count">—</div>
+        <div class="label">Vehicles<br>All Time</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- TABS -->
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('scan')">📷 Scan</button>
+    <button class="tab-btn" onclick="switchTab('log')">📋 Crossing Log</button>
+    <button class="tab-btn viol-tab" onclick="switchTab('violations')">⚠️ Violations</button>
+  </div>
+
+  <!-- SCAN PANEL -->
+  <div class="panel active" id="panel-scan">
+    <div class="section-label">Feed a source — image or video</div>
+    <div class="scan-grid">
+
+      <div class="card image-card">
+        <div class="card-icon">🖼️</div>
+        <div class="card-title">Scan Image</div>
+        <div class="card-desc">Feed an image path. All detected plates saved with crossing time. Bikes checked for helmets automatically.</div>
+        <div class="field">
+          <label>Image File Path</label>
+          <input type="text" id="img-path" placeholder="C:\captures\frame_001.jpg"/>
+        </div>
+        <div class="field">
+          <label>Crossing Time</label>
+          <input type="time" id="img-time" value="09:00"/>
+        </div>
+        <button class="btn btn-pista" id="img-btn" onclick="scanImage()">
+          <span>🔍</span> Detect & Save Plates
+        </button>
+        <div class="status-block" id="img-status"></div>
+        <div class="result-list" id="img-results"></div>
+      </div>
+
+      <div class="card video-card">
+        <div class="card-icon">🎬</div>
+        <div class="card-title">Process Video</div>
+        <div class="card-desc">Feed a video path. System tracks each unique vehicle, logs plates and checks helmet compliance per bike.</div>
+        <div class="field">
+          <label>Video File Path</label>
+          <input type="text" id="vid-path" placeholder="C:\footage\intersection.mp4"/>
+        </div>
+        <div class="field">
+          <label>Crossing Time</label>
+          <input type="time" id="vid-time" value="09:00"/>
+        </div>
+        <button class="btn btn-orange" id="vid-btn" onclick="processVideo()">
+          <span>▶</span> Process & Save Plates
+        </button>
+        <div class="status-block" id="vid-status"></div>
+        <div class="result-list" id="vid-results"></div>
+      </div>
+
+    </div><!-- end scan-grid -->
+
+    <!-- SIGNAL JUMP CONFIG CARD -->
+    <div class="signal-config-card">
+      <div class="signal-config-header" onclick="toggleSignalConfig()">
+        <div class="signal-config-header-icon">🚦</div>
+        <div style="flex:1;">
+          <div class="signal-config-title">Signal Jump Detection</div>
+          <div class="signal-config-sub">Configure ROI · Stop Line · Live Status</div>
+        </div>
+        <div class="signal-config-toggle" id="signal-toggle-arrow">▼</div>
+      </div>
+      <div class="signal-config-body" id="signal-config-body">
+        <div class="signal-status-row">
+          <div class="light-dot unknown" id="live-light-dot"></div>
+          <span>Current light: <strong id="live-light-label" style="text-transform:uppercase;letter-spacing:0.06em;">—</strong></span>
+          <span style="margin-left:auto;font-size:0.73rem;opacity:0.6;" id="signal-enabled-label">—</span>
+        </div>
+        <div class="signal-enabled-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="signal-enabled-toggle" onchange="toggleSignalEnabled(this)">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Enable signal jump detection</span>
+        </div>
+        <div class="signal-grid">
+          <div class="field">
+            <label>ROI — X1 (traffic light left)</label>
+            <input type="number" id="roi-x1" placeholder="1100" min="0"/>
+          </div>
+          <div class="field">
+            <label>ROI — Y1 (traffic light top)</label>
+            <input type="number" id="roi-y1" placeholder="20" min="0"/>
+          </div>
+          <div class="field">
+            <label>ROI — X2 (traffic light right)</label>
+            <input type="number" id="roi-x2" placeholder="1260" min="0"/>
+          </div>
+          <div class="field">
+            <label>ROI — Y2 (traffic light bottom)</label>
+            <input type="number" id="roi-y2" placeholder="180" min="0"/>
+          </div>
+          <div class="field">
+            <label>Stop Line Y (horizontal pixel)</label>
+            <input type="number" id="stop-line-y" placeholder="400" min="0"/>
+          </div>
+          <div class="field">
+            <label>Tolerance (px below stop line)</label>
+            <input type="number" id="signal-tolerance" placeholder="10" min="0"/>
+          </div>
+        </div>
+        <button class="btn-amber" onclick="saveSignalConfig()">💾 Save Signal Config</button>
+        <div class="signal-save-status" id="signal-save-status"></div>
+      </div>
+    </div><!-- end signal-config-card -->
+
+    <!-- RAG CHATBOT -->
+    <div class="chat-wrap">
+      <div class="chat-header">
+        <div class="chat-header-icon">🤖</div>
+        <div class="chat-header-text">
+          <div class="chat-header-title">LPR Intelligence Assistant</div>
+          <div class="chat-header-sub">RAG · Live database access · Gemini powered</div>
+        </div>
+        <div class="dot-live" style="flex-shrink:0;"></div>
+      </div>
+
+      <div class="chat-pills">
+        <button class="chat-pill" onclick="sendSuggestion(this)">How many violations today?</button>
+        <button class="chat-pill" onclick="sendSuggestion(this)">Total vehicles all time</button>
+        <button class="chat-pill" onclick="sendSuggestion(this)">Vehicles between 9 and 12</button>
+        <button class="chat-pill" onclick="sendSuggestion(this)">Most frequent plates</button>
+        <button class="chat-pill" onclick="sendSuggestion(this)">Latest crossings</button>
+        <button class="chat-pill" onclick="sendSuggestion(this)">Bike vs car vs truck count</button>
+        <button class="chat-pill" onclick="sendSuggestion(this)">Signal jump violations today</button>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-bubble bot">
+          👋 Ask me anything about your traffic data — violations, vehicle counts, plate history, time-range breakdowns, and more. I pull live data from your database every time.
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <input
+          class="chat-input"
+          id="chat-input"
+          type="text"
+          placeholder="e.g. Did KA04MN9876 cross here before?"
+          onkeydown="if(event.key==='Enter') sendChat()"
+          maxlength="200"
+        />
+        <button class="chat-send-btn" id="chat-send-btn" onclick="sendChat()">Send ↑</button>
+      </div>
+    </div><!-- end chat-wrap -->
+
+  </div><!-- end panel-scan -->
+
+  <!-- CROSSING LOG PANEL -->
+  <div class="panel" id="panel-log">
+    <div class="stats-row" id="stats-row">
+      <div class="stat-pill hl-orange"><div class="n" id="stat-today">—</div><div class="lbl">Today</div></div>
+      <div class="stat-pill"><div class="n" id="stat-total">—</div><div class="lbl">All Time</div></div>
+      <div class="stat-pill"><div class="n" id="stat-cars">—</div><div class="lbl">Cars</div></div>
+      <div class="stat-pill hl-pista"><div class="n" id="stat-bikes">—</div><div class="lbl">Bikes</div></div>
+      <div class="stat-pill"><div class="n" id="stat-trucks">—</div><div class="lbl">Trucks</div></div>
+      <div class="stat-pill hl-red"><div class="n" id="stat-viols">—</div><div class="lbl">Violations</div></div>
+    </div>
+    <div class="log-header">
+      <div class="log-title">Vehicle Crossings</div>
+      <div class="filter-row" id="filter-row">
+        <button class="filter-btn active" onclick="setFilter('')">All</button>
+        <button class="filter-btn pista" onclick="setFilter('car')">🚗 Cars</button>
+        <button class="filter-btn pista" onclick="setFilter('bike')">🏍️ Bikes</button>
+        <button class="filter-btn pista" onclick="setFilter('truck')">🚛 Trucks</button>
+      </div>
+    </div>
+    <div class="search-row">
+      <input class="search-input" type="text" id="plate-search" placeholder="Search plate…" oninput="debouncedLoad()"/>
+      <button class="refresh-btn" onclick="loadLog()">⟳</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Plate</th>
+            <th>Vehicle Type</th>
+            <th>Crossing Time</th>
+            <th>Logged At</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody"><tr><td colspan="5" class="no-data">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VIOLATIONS PANEL -->
+  <div class="panel" id="panel-violations">
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);max-width:660px;">
+      <div class="stat-pill hl-red"><div class="n" id="vstat-total">—</div><div class="lbl">Total</div></div>
+      <div class="stat-pill hl-red"><div class="n" id="vstat-today">—</div><div class="lbl">Today</div></div>
+      <div class="stat-pill"><div class="n" id="vstat-helmet">—</div><div class="lbl">No Helmet</div></div>
+      <div class="stat-pill" style="border-color:#f5c842;"><div class="n" id="vstat-signal" style="color:#c97f00;">—</div><div class="lbl">Signal Jump</div></div>
+    </div>
+    <div class="log-header">
+      <div class="log-title" style="color:var(--red);">⚠️ Violation Log</div>
+      <div class="filter-row" id="viol-filter-row">
+        <button class="filter-btn active" onclick="setViolFilter('')">All</button>
+        <button class="filter-btn red-f" onclick="setViolFilter('no_helmet')">⛑ No Helmet</button>
+        <button class="filter-btn" style="--active-bg:#c97f00;" onclick="setViolFilter('signal_jump')">🚦 Signal Jump</button>
+      </div>
+    </div>
+    <div class="search-row">
+      <input class="search-input" type="text" id="viol-search" placeholder="Search plate…" oninput="debouncedViolLoad()"/>
+      <button class="refresh-btn" onclick="loadViolations()">⟳</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Plate</th>
+            <th>Vehicle Type</th>
+            <th>Violation</th>
+            <th>Crossing Time</th>
+            <th>Logged At</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="viol-tbody"><tr><td colspan="6" class="no-data">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('show')">✕</button>
+    <div class="modal-plate" id="modal-plate-num">—</div>
+    <div class="modal-sub" id="modal-plate-sub">—</div>
+    <div class="section-label">Crossing History</div>
+    <div class="crossing-timeline" id="modal-timeline"><div class="no-data">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000';
+let activeFilter = '';
+let pollTimer    = null;
+let debT = null, debVT = null;
+
+function vtIcon(t){return{car:'🚗',bike:'🏍️',truck:'🚛',unknown:'🚘'}[t]||'🚘';}
+function vtLabel(t){return t?t.charAt(0).toUpperCase()+t.slice(1):'Unknown';}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active',
+      (tab==='scan'&&b.textContent.includes('Scan'))||
+      (tab==='log'&&b.textContent.includes('Crossing'))||
+      (tab==='violations'&&b.textContent.includes('Violation'))
+    );
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='log') loadLog();
+  if(tab==='violations') loadViolations();
+}
+
+function setStatus(id,type,msg,spinning=false){
+  const el=document.getElementById(id);
+  el.className='status-block show '+type;
+  el.innerHTML=(spinning?'<div class="spinner"></div>':'')+`<span>${msg}</span>`;
+}
+
+function buildChip(p){
+  const isHelmet = p.violation === 'no_helmet';
+  const isSignal = p.violation === 'signal_jump';
+  const hasViol  = isHelmet || isSignal;
+  const violBadge = isHelmet
+    ? '<span class="violation-badge">No Helmet</span>'
+    : isSignal
+      ? '<span class="violation-badge" style="background:#c97f00;">🚦 Signal Jump</span>'
+      : '';
+  return `<div class="result-chip${hasViol?' has-violation':''}">
+    <div class="vtype-badge">${vtIcon(p.vehicle_type)}</div>
+    <div>
+      <div class="plate-text">${p.plate}</div>
+      <div class="plate-meta">${vtLabel(p.vehicle_type)}${hasViol?' · '+violBadge:''}</div>
+    </div>
+    <div class="time-tag">${p.crossing_time}</div>
+  </div>`;
+}
+
+// ── IMAGE SCAN ──
+async function scanImage(){
+  const path=document.getElementById('img-path').value.trim();
+  const time=document.getElementById('img-time').value;
+  if(!path){setStatus('img-status','error','Please enter an image file path.');return;}
+  const btn=document.getElementById('img-btn');
+  btn.disabled=true;
+  document.getElementById('img-results').innerHTML='';
+  setStatus('img-status','info','Detecting plates…',true);
+  try{
+    const res  =await fetch(`${API}/detect_image`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_path:path,crossing_time:time})});
+    const data =await res.json();
+    if(!res.ok||data.error){setStatus('img-status','error',data.error||'Detection failed.');return;}
+    const count=data.plates_saved||0;
+    setStatus('img-status','success',`✓ ${count} plate${count!==1?'s':''} saved to database.`);
+    document.getElementById('img-results').innerHTML=(data.plates||[]).map(buildChip).join('');
+    refreshTopbar();
+  }catch(e){setStatus('img-status','error','Cannot reach server. Is Flask running?');}
+  finally{btn.disabled=false;}
+}
+
+// ── VIDEO ──
+async function processVideo(){
+  const path=document.getElementById('vid-path').value.trim();
+  const time=document.getElementById('vid-time').value;
+  if(!path){setStatus('vid-status','error','Please enter a video file path.');return;}
+  const btn=document.getElementById('vid-btn');
+  btn.disabled=true;
+  document.getElementById('vid-results').innerHTML='';
+  setStatus('vid-status','waiting','Queuing video…',true);
+  try{
+    const res =await fetch(`${API}/process_video`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({video_path:path,crossing_time:time})});
+    const data=await res.json();
+    if(!res.ok||data.error){setStatus('vid-status','error',data.error||'Failed.');btn.disabled=false;return;}
+    setStatus('vid-status','info','Processing video…',true);
+    pollJob(data.job_id,btn);
+  }catch(e){setStatus('vid-status','error','Cannot reach server.');btn.disabled=false;}
+}
+
+function pollJob(jobId,btn){
+  if(pollTimer)clearInterval(pollTimer);
+  pollTimer=setInterval(async()=>{
+    try{
+      const res =await fetch(`${API}/video_status/${jobId}`);
+      const data=await res.json();
+      if(data.status==='done'){
+        clearInterval(pollTimer);btn.disabled=false;
+        const count=data.results?.length||0;
+        setStatus('vid-status','success',`✓ ${count} plate${count!==1?'s':''} saved.`);
+        document.getElementById('vid-results').innerHTML=(data.results||[]).map(buildChip).join('');
+        refreshTopbar();
+      }else if(data.status==='error'){
+        clearInterval(pollTimer);btn.disabled=false;
+        setStatus('vid-status','error',data.error||'Processing failed.');
+      }else{setStatus('vid-status','info','Still processing…',true);}
+    }catch(e){clearInterval(pollTimer);btn.disabled=false;setStatus('vid-status','error','Lost connection.');}
+  },2500);
+}
+
+// ── LOG ──
+function setFilter(type){
+  activeFilter=type;
+  document.querySelectorAll('#filter-row .filter-btn').forEach(b=>{
+    b.classList.toggle('active',
+      (type===''&&b.textContent==='All')||
+      (type!==''&&b.textContent.toLowerCase().includes(type))
+    );
+  });
+  loadLog();
+}
+
+function debouncedLoad(){clearTimeout(debT);debT=setTimeout(loadLog,350);}
+function debouncedViolLoad(){clearTimeout(debVT);debVT=setTimeout(loadViolations,350);}
+
+async function loadLog(){
+  const search=document.getElementById('plate-search')?.value?.trim()||'';
+  let url=`${API}/crossings?`;
+  if(activeFilter) url+=`vehicle_type=${activeFilter}&`;
+  if(search)       url+=`plate=${encodeURIComponent(search)}&`;
+  try{
+    const [logRes,statRes]=await Promise.all([fetch(url),fetch(`${API}/crossings/stats`)]);
+    const logData =await logRes.json();
+    const statData=await statRes.json();
+    document.getElementById('stat-today').textContent  =statData.today??'0';
+    document.getElementById('stat-total').textContent  =statData.total??'0';
+    document.getElementById('stat-cars').textContent   =statData.cars??'0';
+    document.getElementById('stat-bikes').textContent  =statData.bikes??'0';
+    document.getElementById('stat-trucks').textContent =statData.trucks??'0';
+    document.getElementById('stat-viols').textContent  =statData.violations_total??'0';
+    document.getElementById('topbar-count').textContent=statData.total??'0';
+    document.getElementById('topbar-violations').textContent=statData.violations_today??'0';
+
+    const rows=logData.crossings||[];
+    const tbody=document.getElementById('log-tbody');
+    if(!rows.length){
+      tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="ei">📭</div><p>No crossings yet.<br>Scan an image or video.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML=rows.map(r=>`
+      <tr>
+        <td class="plate-cell" onclick="openModal('${r.plate}')">${r.plate}</td>
+        <td><span class="vbadge ${r.vehicle_type||'unknown'}">${vtIcon(r.vehicle_type||'unknown')} ${vtLabel(r.vehicle_type)}</span></td>
+        <td><span style="font-family:'DM Mono',monospace;color:var(--orange);font-weight:500;">${r.crossing_time||'—'}</span></td>
+        <td style="color:var(--text-light);font-size:0.78rem;">${fmtDate(r.created_at)}</td>
+        <td style="color:var(--text-light);font-size:0.76rem;font-style:italic;">${r.source_type||'—'}</td>
+      </tr>`).join('');
+  }catch(e){
+    document.getElementById('log-tbody').innerHTML=`<tr><td colspan="5" class="no-data" style="color:var(--orange);">⚠ Cannot connect to server.</td></tr>`;
+  }
+}
+
+// ── VIOLATIONS ──
+let activeViolFilter = '';
+
+function setViolFilter(type) {
+  activeViolFilter = type;
+  document.querySelectorAll('#viol-filter-row .filter-btn').forEach(b => {
+    const isAll    = type === '' && b.textContent.trim() === 'All';
+    const isMatch  = type !== '' && b.textContent.toLowerCase().includes(type.replace('_',' '));
+    b.classList.toggle('active', isAll || isMatch);
+    if (isMatch && type === 'signal_jump') b.style.background = '#c97f00';
+    else if (!b.classList.contains('active')) b.style.background = '';
+  });
+  loadViolations();
+}
+
+function violBadgeHTML(vtype) {
+  if (vtype === 'no_helmet')
+    return `<span class="viol-badge no_helmet">⛑ No Helmet</span>`;
+  if (vtype === 'signal_jump')
+    return `<span class="viol-badge signal_jump">🚦 Signal Jump</span>`;
+  return `<span class="viol-badge no_helmet">${vtype}</span>`;
+}
+
+async function loadViolations(){
+  const search = document.getElementById('viol-search')?.value?.trim() || '';
+  let url = `${API}/violations?`;
+  if (search)            url += `plate=${encodeURIComponent(search)}&`;
+  if (activeViolFilter)  url += `violation_type=${encodeURIComponent(activeViolFilter)}&`;
+  try{
+    const [res, statRes] = await Promise.all([fetch(url), fetch(`${API}/crossings/stats`)]);
+    const data     = await res.json();
+    const statData = await statRes.json();
+    document.getElementById('vstat-total').textContent  = statData.violations_total  ?? '0';
+    document.getElementById('vstat-today').textContent  = statData.violations_today  ?? '0';
+    // helmet count = total - signal jump total
+    const helmetCount = (statData.violations_total ?? 0) - (statData.signal_jump_total ?? 0);
+    document.getElementById('vstat-helmet').textContent  = helmetCount >= 0 ? helmetCount : '0';
+    document.getElementById('vstat-signal').textContent  = statData.signal_jump_total ?? '0';
+
+    const rows  = data.violations || [];
+    const tbody = document.getElementById('viol-tbody');
+    if (!rows.length){
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="ei">✅</div><p>No violations recorded.<br>All vehicles compliant!</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td class="plate-cell" onclick="openModal('${r.plate}')">${r.plate}</td>
+        <td><span class="vbadge ${r.vehicle_type||'unknown'}">${vtIcon(r.vehicle_type||'unknown')} ${vtLabel(r.vehicle_type)}</span></td>
+        <td>${violBadgeHTML(r.violation_type)}</td>
+        <td><span style="font-family:'DM Mono',monospace;color:var(--red);font-weight:500;">${r.crossing_time||'—'}</span></td>
+        <td style="color:var(--text-light);font-size:0.78rem;">${fmtDate(r.created_at)}</td>
+        <td style="color:var(--text-light);font-size:0.76rem;font-style:italic;">${r.source_type||'—'}</td>
+      </tr>`).join('');
+  } catch(e) {
+    document.getElementById('viol-tbody').innerHTML = `<tr><td colspan="6" class="no-data" style="color:var(--orange);">⚠ Cannot connect to server.</td></tr>`;
+  }
+}
+
+// ── REFRESH TOPBAR ──
+async function refreshTopbar(){
+  try{
+    const res =await fetch(`${API}/crossings/stats`);
+    const data=await res.json();
+    document.getElementById('topbar-count').textContent=data.total??'—';
+    document.getElementById('topbar-violations').textContent=data.violations_today??'—';
+  }catch(e){}
+}
+
+function fmtDate(dt){
+  if(!dt)return'—';
+  try{
+    const d=new Date(dt.replace(' ','T'));
+    return d.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true});
+  }catch(e){return dt;}
+}
+
+// ── PLATE MODAL ──
+async function openModal(plate){
+  document.getElementById('modal-plate-num').textContent=plate;
+  document.getElementById('modal-plate-sub').textContent='Loading…';
+  document.getElementById('modal-timeline').innerHTML='<div class="no-data"><div class="spinner" style="display:inline-block;margin-right:6px;"></div>Loading…</div>';
+  document.getElementById('modal-overlay').classList.add('show');
+  try{
+    const res =await fetch(`${API}/crossings/plate/${plate}`);
+    const data=await res.json();
+    const crossings=data.crossings||[];
+    document.getElementById('modal-plate-sub').textContent=
+      crossings.length?`${vtLabel(crossings[0].vehicle_type)} · ${crossings.length} crossing${crossings.length>1?'s':''}`:'No history';
+    if(!crossings.length){
+      document.getElementById('modal-timeline').innerHTML='<div class="no-data">No crossings found.</div>';return;
+    }
+    document.getElementById('modal-timeline').innerHTML=crossings.map(c=>`
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-info">
+          <div class="time">🕐 ${c.crossing_time||'—'}</div>
+          <div class="when">${fmtDate(c.created_at)}</div>
+          <div class="src">via ${c.source_type||'—'} · ${c.source_path?(c.source_path.split(/[/\\]/).pop()):'—'}</div>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    document.getElementById('modal-timeline').innerHTML='<div class="no-data" style="color:var(--orange);">Error loading history.</div>';
+  }
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('show');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  refreshTopbar();
+  setInterval(refreshTopbar,30000);
+});
+
+// ── RAG CHATBOT ──
+function _chatAddBubble(text, role, meta) {
+  const box  = document.getElementById('chat-messages');
+  const div  = document.createElement('div');
+  div.className = `chat-bubble ${role}`;
+  div.innerHTML  = text.replace(/\n/g,'<br>');
+  if (meta) {
+    const m = document.createElement('div');
+    m.className = 'bubble-meta';
+    m.textContent = meta;
+    div.appendChild(m);
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+function _chatShowTyping() {
+  return _chatAddBubble('⏳ Thinking…', 'bot typing');
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const btn   = document.getElementById('chat-send-btn');
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  btn.disabled = true;
+
+  _chatAddBubble(msg, 'user');
+  const typingEl = _chatShowTyping();
+
+  try {
+    const res  = await fetch(`${API}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    typingEl.remove();
+    if (data.error) {
+      _chatAddBubble('⚠ ' + data.error, 'bot');
+    } else {
+      const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+      _chatAddBubble(data.answer, 'bot', `live db · ${now}`);
+    }
+  } catch(e) {
+    typingEl.remove();
+    _chatAddBubble('⚠ Cannot reach server. Is Flask running?', 'bot');
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+function sendSuggestion(el) {
+  const input = document.getElementById('chat-input');
+  input.value = el.textContent.trim();
+  sendChat();
+}
+
+// ── SIGNAL CONFIG ──
+function toggleSignalConfig() {
+  const body  = document.getElementById('signal-config-body');
+  const arrow = document.getElementById('signal-toggle-arrow');
+  const open  = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+  if (open) loadSignalConfig();
+}
+
+async function loadSignalConfig() {
+  try {
+    const res  = await fetch(`${API}/signal_config`);
+    const cfg  = await res.json();
+    document.getElementById('roi-x1').value         = cfg.roi?.[0] ?? 1100;
+    document.getElementById('roi-y1').value         = cfg.roi?.[1] ?? 20;
+    document.getElementById('roi-x2').value         = cfg.roi?.[2] ?? 1260;
+    document.getElementById('roi-y2').value         = cfg.roi?.[3] ?? 180;
+    document.getElementById('stop-line-y').value    = cfg.stop_line_y ?? 400;
+    document.getElementById('signal-tolerance').value = cfg.tolerance ?? 10;
+    document.getElementById('signal-enabled-toggle').checked = cfg.enabled ?? true;
+    updateLightDot(cfg.current_light);
+    document.getElementById('signal-enabled-label').textContent =
+      cfg.enabled ? '● Detection ON' : '○ Detection OFF';
+  } catch(e) {
+    console.warn('[SIGNAL CFG] Could not load config:', e);
+  }
+}
+
+function updateLightDot(color) {
+  const dot   = document.getElementById('live-light-dot');
+  const label = document.getElementById('live-light-label');
+  dot.className   = `light-dot ${color || 'unknown'}`;
+  label.textContent = color || 'unknown';
+  label.style.color = color === 'red' ? '#e84040' : color === 'green' ? '#3dbc5c' : '#999';
+}
+
+function toggleSignalEnabled(cb) {
+  document.getElementById('signal-enabled-label').textContent =
+    cb.checked ? '● Detection ON' : '○ Detection OFF';
+}
+
+async function saveSignalConfig() {
+  const roi = [
+    parseInt(document.getElementById('roi-x1').value) || 1100,
+    parseInt(document.getElementById('roi-y1').value) || 20,
+    parseInt(document.getElementById('roi-x2').value) || 1260,
+    parseInt(document.getElementById('roi-y2').value) || 180,
+  ];
+  const body = {
+    roi,
+    stop_line_y : parseInt(document.getElementById('stop-line-y').value)    || 400,
+    tolerance   : parseInt(document.getElementById('signal-tolerance').value) || 10,
+    enabled     : document.getElementById('signal-enabled-toggle').checked,
+  };
+  const status = document.getElementById('signal-save-status');
+  status.style.display = 'block';
+  status.style.color   = 'var(--text-light)';
+  status.textContent   = 'Saving…';
+  try {
+    const res  = await fetch(`${API}/signal_config`, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      status.style.color = 'var(--pista-dark)';
+      status.textContent = '✓ Config saved — active immediately.';
+      updateLightDot(data.config?.current_light);
+    } else {
+      status.style.color = 'var(--red)';
+      status.textContent = '✗ ' + (data.error || 'Save failed.');
+    }
+  } catch(e) {
+    status.style.color = 'var(--red)';
+    status.textContent = '✗ Cannot reach server.';
+  }
+  setTimeout(() => { status.style.display = 'none'; }, 4000);
+}
+</script>
+</body>
+</html>
